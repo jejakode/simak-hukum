@@ -1,0 +1,15 @@
+.git
+.gitignore
+.editorconfig
+.env
+node_modules
+vendor
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+bootstrap/cache/*
+tests
+README.md
+create_template.php
+sk_template_new.docx
