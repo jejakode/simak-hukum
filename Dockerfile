@@ -9,18 +9,6 @@ COPY . .
 
 RUN npm run build
 
-FROM composer:2 AS composer-builder
-
-WORKDIR /app
-
-COPY composer.json composer.lock ./
-RUN composer install \
-    --no-dev \
-    --prefer-dist \
-    --no-interaction \
-    --no-progress \
-    --optimize-autoloader
-
 FROM php:8.3-fpm-alpine
 
 WORKDIR /var/www/html
@@ -49,8 +37,18 @@ RUN apk add --no-cache \
     zip \
     opcache
 
+COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
+
+COPY composer.json composer.lock ./
+RUN composer install \
+    --no-dev \
+    --prefer-dist \
+    --no-interaction \
+    --no-progress \
+    --no-scripts \
+    --optimize-autoloader
+
 COPY . .
-COPY --from=composer-builder /app/vendor ./vendor
 COPY --from=node-builder /app/public/build ./public/build
 
 COPY docker/nginx/default.conf /etc/nginx/http.d/default.conf
