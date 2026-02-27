@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="SIMAK HUKUM">
+  <rect width="64" height="64" rx="14" fill="#7c3aed" />
+  <path
+    d="M32 52V30m10 22V30m-20 22V30M12 22l20-10 20 10M16 52V24.2c10.8-2.2 21.2-2.2 32 0V52M12 52h40"
+    fill="none"
+    stroke="#ffffff"
+    stroke-width="4"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+</svg>
