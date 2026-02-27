@@ -4,6 +4,21 @@
 	<head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta name="description" content="@yield('meta_description', 'SIMAK HUKUM - Sistem Informasi Manajemen Surat Keputusan untuk penyusunan, pratinjau, dan ekspor dokumen SK.')">
+		<meta name="robots" content="@yield('meta_robots', 'index,follow')">
+		<meta name="author" content="SIMAK HUKUM">
+
+		<meta property="og:type" content="website">
+		<meta property="og:site_name" content="SIMAK HUKUM">
+		<meta property="og:title" content="@yield('meta_title', 'SIMAK HUKUM - Sistem Informasi Manajemen Surat Keputusan')">
+		<meta property="og:description" content="@yield('meta_description', 'SIMAK HUKUM - Sistem Informasi Manajemen Surat Keputusan untuk penyusunan, pratinjau, dan ekspor dokumen SK.')">
+		<meta property="og:url" content="{{ url()->current() }}">
+		<meta property="og:image" content="@yield('meta_image', asset('assets/hero.png'))">
+
+		<meta name="twitter:card" content="summary_large_image">
+		<meta name="twitter:title" content="@yield('meta_title', 'SIMAK HUKUM - Sistem Informasi Manajemen Surat Keputusan')">
+		<meta name="twitter:description" content="@yield('meta_description', 'SIMAK HUKUM - Sistem Informasi Manajemen Surat Keputusan untuk penyusunan, pratinjau, dan ekspor dokumen SK.')">
+		<meta name="twitter:image" content="@yield('meta_image', asset('assets/hero.png'))">
 
 		<title>SIMAK HUKUM - Sistem Informasi Manajemen Surat Keputusan</title>
 

@@ -52,8 +52,9 @@
 				</svg>
 				<span class="sr-only">Toggle Theme</span>
 			</button>
-			<a href="{{ url('/sk/create') }}" class="rounded-base bg-linear-to-br hover:bg-linear-to-bl from-purple-600 to-blue-500 px-4 py-2.5 text-center text-sm font-medium leading-5 text-white focus:outline-none focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-800">
-				Buat SK
+			<a href="{{ url('/sk/create') }}" class="inline-flex items-center gap-2 rounded-base bg-linear-to-br hover:bg-linear-to-bl from-purple-600 to-blue-500 px-4 py-2.5 text-center text-sm font-medium leading-5 text-white focus:outline-none focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-800">
+				<x-heroicon-o-document-text class="h-4 w-4" />
+				<span>Buat SK</span>
 			</a>
 
 			<button

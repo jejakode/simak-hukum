@@ -11,63 +11,66 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class SkController extends Controller
 {
+    private const FIXED_DITETAPKAN_DI = 'BUOL';
+    private const FIXED_JABATAN_PENANDATANGAN = 'BUPATI BUOL';
+    private const FIXED_NAMA_PENANDATANGAN = 'RISHARYUDI TRIWIBOWO';
+
     const DIKTUM_LABELS = [
         'KESATU', 'KEDUA', 'KETIGA', 'KEEMPAT', 'KELIMA',
         'KEENAM', 'KETUJUH', 'KEDELAPAN', 'KESEMBILAN', 'KESEPULUH',
     ];
 
-    public function create(): Response
+    public function create(Request $request): Response|RedirectResponse
     {
-        return response()->view('pages.sk-form');
+        $hasSessionDraft = !empty(session()->get('sk_data', []));
+        $isEditMode = $request->boolean('edit');
+        $isFreshMode = $request->boolean('fresh');
+        $hasOldInput = $request->session()->hasOldInput();
+
+        if ($hasSessionDraft && !$isEditMode && !$isFreshMode && !$hasOldInput) {
+            return redirect()->route('sk.preview');
+        }
+
+        $draft = $isFreshMode
+            ? $this->defaultData()
+            : $this->defaultData(session()->get('sk_data', []));
+
+        return response()->view('pages.sk-form', [
+            'draft' => $draft,
+            'fresh' => $isFreshMode,
+            'hasServerDraft' => $hasSessionDraft,
+        ]);
+    }
+
+    public function newDraft(): RedirectResponse
+    {
+        session()->forget('sk_data');
+
+        return redirect()->route('sk.create', ['fresh' => 1]);
     }
 
     public function handle(Request $request): RedirectResponse
     {
+        $validated = $request->validate(
+            $this->validationRules(),
+            $this->validationMessages(),
+            $this->validationAttributes()
+        );
+
         $action = $request->input('action', 'preview');
-        $data = $this->normalizePayload($request);
+        $data = $this->normalizePayload($validated);
 
         $data['requested_output'] = $action;
 
-        // Simpan data ke session untuk digunakan di PDF dan DOCX
         session()->put('sk_data', $data);
 
-        // Debug: Pastikan data tersimpan
-        if (empty($data['menimbang']) && empty($data['mengingat'])) {
-            // Jika data kosong, tambah testing data
-            $data['menimbang'] = ['bahwa dalam rangka meningkatkan kesehatan masyarakat perlu dibentuk tim pelaksana kegiatan vaksinasi'];
-            $data['mengingat'] = ['Undang-Undang Nomor 36 Tahun 2009 tentang Kesehatan'];
-             session()->put('sk_data', $data);
-        }
-
-        // Redirect tanpa data di URL, data akan diambil dari session
         return redirect()->route('sk.preview');
     }
 
     public function preview(Request $request): Response
     {
-        // Ambil data dari session
         $data = session()->get('sk_data', []);
-        
-        // Jika session kosong, coba dari request
-        if (empty($data)) {
-            $data = $request->all();
-        }
-        
-        // Pastikan semua key ada dengan default array kosong
-        $data = array_merge([
-            'menimbang' => [],
-            'mengingat' => [],
-            'memperhatikan' => [],
-            'diktum' => [],
-            'sk_title' => '',
-            'nomor_surat' => '',
-            'menetapkan' => '',
-            'ditetapkan_di' => '',
-            'pada_tanggal' => '',
-            'jabatan_penandatangan' => '',
-            'nama_penandatangan' => '',
-            'nip_penandatangan' => ''
-        ], $data);
+        $data = $this->defaultData($data);
 
         return response()->view('pages.sk-preview', $data);
     }
@@ -86,21 +89,20 @@ class SkController extends Controller
         return $this->downloadDocx($data);
     }
 
-    private function normalizePayload(Request $request): array
+    private function normalizePayload(array $validated): array
     {
         return [
-            'nomor_surat' => $request->string('nomor_surat')->toString(),
-            'sk_title' => $request->string('sk_title')->toString(),
-            'menimbang' => $this->filterArray($request->input('menimbang', [])),
-            'mengingat' => $this->filterArray($request->input('mengingat', [])),
-            'memperhatikan' => $this->filterArray($request->input('memperhatikan', [])),
-            'menetapkan' => $request->string('menetapkan')->toString(),
-            'diktum' => $this->filterArray($request->input('diktum', [])),
-            'ditetapkan_di' => $request->string('ditetapkan_di')->toString(),
-            'pada_tanggal' => $request->string('pada_tanggal')->toString(),
-            'jabatan_penandatangan' => $request->string('jabatan_penandatangan')->toString(),
-            'nama_penandatangan' => $request->string('nama_penandatangan')->toString(),
-            'nip_penandatangan' => $request->string('nip_penandatangan')->toString(),
+            'nomor_surat' => trim((string) ($validated['nomor_surat'] ?? '')),
+            'sk_title' => trim((string) ($validated['sk_title'] ?? '')),
+            'menimbang' => $this->filterArray($validated['menimbang'] ?? []),
+            'mengingat' => $this->filterArray($validated['mengingat'] ?? []),
+            'memperhatikan' => $this->filterArray($validated['memperhatikan'] ?? []),
+            'menetapkan' => trim((string) ($validated['menetapkan'] ?? '')),
+            'diktum' => $this->filterArray($validated['diktum'] ?? []),
+            'ditetapkan_di' => self::FIXED_DITETAPKAN_DI,
+            'pada_tanggal' => trim((string) ($validated['pada_tanggal'] ?? '')),
+            'jabatan_penandatangan' => self::FIXED_JABATAN_PENANDATANGAN,
+            'nama_penandatangan' => self::FIXED_NAMA_PENANDATANGAN,
         ];
     }
 
@@ -117,6 +119,76 @@ class SkController extends Controller
 
             return (bool) $value;
         }));
+    }
+
+    private function defaultData(array $data = []): array
+    {
+        return array_merge([
+            'menimbang' => [],
+            'mengingat' => [],
+            'memperhatikan' => [],
+            'diktum' => [],
+            'sk_title' => '',
+            'nomor_surat' => '',
+            'menetapkan' => '',
+            'ditetapkan_di' => self::FIXED_DITETAPKAN_DI,
+            'pada_tanggal' => '',
+            'jabatan_penandatangan' => self::FIXED_JABATAN_PENANDATANGAN,
+            'nama_penandatangan' => self::FIXED_NAMA_PENANDATANGAN,
+        ], $data);
+    }
+
+    private function validationRules(): array
+    {
+        return [
+            'nomor_surat' => ['required', 'string', 'max:255'],
+            'sk_title' => ['required', 'string', 'max:2000'],
+            'menimbang' => ['required', 'array', 'min:1'],
+            'menimbang.*' => ['required', 'string', 'max:4000'],
+            'mengingat' => ['required', 'array', 'min:1'],
+            'mengingat.*' => ['required', 'string', 'max:4000'],
+            'memperhatikan' => ['nullable', 'array'],
+            'memperhatikan.*' => ['nullable', 'string', 'max:4000'],
+            'menetapkan' => ['required', 'string', 'max:4000'],
+            'diktum' => ['required', 'array', 'min:1'],
+            'diktum.*' => ['required', 'string', 'max:4000'],
+            'ditetapkan_di' => ['required', 'string', 'max:255'],
+            'pada_tanggal' => ['required', 'date_format:Y-m-d'],
+            'jabatan_penandatangan' => ['required', 'string', 'max:255'],
+            'nama_penandatangan' => ['required', 'string', 'max:255'],
+        ];
+    }
+
+    private function validationMessages(): array
+    {
+        return [
+            'required' => ':attribute wajib diisi.',
+            'array' => ':attribute harus berupa daftar.',
+            'min' => ':attribute minimal :min poin.',
+            'max' => ':attribute melebihi batas karakter.',
+            'date_format' => ':attribute harus menggunakan format tanggal yang valid.',
+        ];
+    }
+
+    private function validationAttributes(): array
+    {
+        return [
+            'nomor_surat' => 'Nomor Surat',
+            'sk_title' => 'Judul Lengkap',
+            'menimbang' => 'Menimbang',
+            'menimbang.*' => 'Poin Menimbang',
+            'mengingat' => 'Mengingat',
+            'mengingat.*' => 'Poin Mengingat',
+            'memperhatikan' => 'Memperhatikan',
+            'memperhatikan.*' => 'Poin Memperhatikan',
+            'menetapkan' => 'Menetapkan',
+            'diktum' => 'Diktum',
+            'diktum.*' => 'Poin Diktum',
+            'ditetapkan_di' => 'Ditetapkan di',
+            'pada_tanggal' => 'Pada Tanggal',
+            'jabatan_penandatangan' => 'Jabatan Penandatangan',
+            'nama_penandatangan' => 'Nama Penandatangan',
+        ];
     }
 
     private function downloadPdf(array $data): Response

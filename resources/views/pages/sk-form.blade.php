@@ -1,351 +1,376 @@
 @extends('layouts.app')
+
 @section('content')
-	<div class="min-h-screen bg-slate-950 font-sans text-gray-100">
-		<main class="pt-26 py-10">
-			<div class="container mx-auto px-4 sm:px-6 lg:px-8">
-				<div class="mb-8 text-center">
-					<span class="ring-brand-subtle text-fg-brand-strong bg-brand-softer inline-flex items-center rounded px-2 py-1 text-sm font-medium ring-1 ring-inset mb-2">DRAFT</span>
-					<h1 class="mb-2 text-3xl font-bold text-gray-900 dark:text-white">
-						Form Surat Keputusan
-					</h1>
-					<p class="text-lg text-gray-600">Buat draf dokumen resmi sesuai standar tata naskah dinas.</p>
-				</div>
-				<form
-					action="{{ route('sk.handle') }}"
-					method="POST"
-					class="mx-auto max-w-5xl space-y-8"
-				>
-					@csrf
-					{{-- Section 1: Judul --}}
-					<section class="overflow-hidden rounded-lg border border-slate-800 bg-slate-900 shadow-lg">
-						<div class="border-b border-slate-800 bg-slate-800 px-6 py-4">
-							<h2 class="text-lg font-semibold text-gray-900 dark:text-white">1. Judul Surat Keputusan</h2>
-							<p class="text-sm text-gray-400">Informasi utama mengenai keputusan yang akan ditetapkan.</p>
-						</div>
-						<div class="space-y-6 p-6">
-							<div>
-								<label for="nomor_surat" class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">Nomor Surat</label>
-								<input
-									type="text"
-									name="nomor_surat"
-									id="nomor_surat"
-									class="border-default-medium text-heading rounded-base shadow-xs placeholder:text-body focus:ring-none block w-full border bg-gray-50 p-3.5 text-sm focus:outline-2 focus:outline-purple-600 dark:bg-gray-700 dark:focus:outline-purple-400"
-									placeholder="Contoh: 800 / BKPSDM / 2024"
-								>
-								<p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
-									Format nomor surat keputusan.
-								</p>
-							</div>
-							<div>
-								<label for="sk_title" class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">Judul Lengkap</label>
-								<textarea
-								 name="sk_title"
-								 id="sk_title"
-								 rows="3"
-								 class="border-default-medium text-heading rounded-base shadow-xs placeholder:text-body focus:ring-none block w-full border bg-gray-50 p-3.5 text-sm focus:outline-2 focus:outline-purple-600 dark:bg-gray-700 dark:focus:outline-purple-400"
-								 placeholder="Contoh: KEPUTUSAN KEPALA DINAS KESEHATAN TENTANG PEMBENTUKAN TIM PELAKSANA KEGIATAN VAKSINASI TAHUN 2024"
-								></textarea>
-								<p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
-									Gunakan huruf kapital untuk judul resmi.
-								</p>
-							</div>
-						</div>
-					</section>
+    <div class="min-h-screen bg-slate-100 text-slate-900 transition-colors dark:bg-slate-950 dark:text-slate-100">
+        <main class="pt-26 py-10">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="mb-8 text-center">
+                    {{-- <span class="mb-2 inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-semibold tracking-wide text-blue-700 dark:border-cyan-700/40 dark:bg-cyan-900/30 dark:text-cyan-200">DRAFT</span> --}}
+                    <h1 class="mb-2 text-3xl font-bold text-slate-900 dark:text-slate-100">Form Surat Keputusan</h1>
+                    <p class="text-base text-slate-600 dark:text-slate-300">Buat draf dokumen resmi sesuai standar tata naskah dinas.</p>
+                </div>
 
-					{{-- Section 2: Konsiderans --}}
-					<section class="overflow-hidden rounded-lg border border-slate-800 bg-slate-900 shadow-lg">
-						<div class="border-b border-slate-800 bg-slate-800 px-6 py-4">
-							<h2 class="text-lg font-semibold text-gray-900 dark:text-white">2. Dasar Hukum (Konsiderans)</h2>
-							<p class="text-sm text-gray-400">Alasan dan landasan hukum penetapan keputusan.</p>
-						</div>
-						<div class="space-y-8 p-6">
-							{{-- Menimbang --}}
-							<div>
-								<div class="mb-3 flex items-center justify-between">
-									<label class="block text-sm font-medium text-gray-900 dark:text-white">Menimbang</label>
-									<button
-										type="button"
-										onclick="addInput('menimbang')"
-										class="inline-flex cursor-pointer items-center text-sm font-medium text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-500"
-									>
-										<svg
-											xmlns="http://www.w3.org/2000/svg"
-											viewBox="0 0 20 20"
-											fill="currentColor"
-											class="h-4 w-4"
-										>
-											<path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" />
-										</svg>
-										Tambah Poin
-									</button>
-								</div>
-								<div id="menimbang-container" class="space-y-3">
-									{{-- Dynamic inputs --}}
-								</div>
-								<p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Uraikan alasan-alasan perlunya penetapan keputusan ini (huruf a, b, dst).</p>
-							</div>
+                <div id="autosave-toast" class="pointer-events-none fixed right-4 top-24 z-50 rounded-lg border border-slate-200 bg-white/95 px-3 py-2 text-xs text-slate-600 opacity-0 shadow-sm transition-opacity duration-200 dark:border-slate-700 dark:bg-slate-900/95 dark:text-slate-300">
+                    Draft tersimpan
+                </div>
 
-							<hr class="border-gray-200 dark:border-gray-700">
+                <form id="sk-form" action="{{ route('sk.handle') }}" method="POST" class="mx-auto max-w-5xl space-y-8">
+                    @csrf
 
-							{{-- Mengingat --}}
-							<div>
-								<div class="mb-3 flex items-center justify-between">
-									<label class="block text-sm font-medium text-gray-900 dark:text-white">Mengingat</label>
-									<button
-										type="button"
-										onclick="addInput('mengingat')"
-										class="inline-flex cursor-pointer items-center text-sm font-medium text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-500"
-									>
-										<svg
-											xmlns="http://www.w3.org/2000/svg"
-											viewBox="0 0 20 20"
-											fill="currentColor"
-											class="h-4 w-4"
-										>
-											<path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" />
-										</svg>
-										Tambah Poin
-									</button>
-								</div>
-								<div id="mengingat-container" class="space-y-3">
-									{{-- Dynamic inputs --}}
-								</div>
-								<p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Daftar peraturan perundang-undangan yang menjadi dasar hukum (angka 1, 2, dst).</p>
-							</div>
+                    @if($errors->any())
+                        <div class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-200">
+                            <p class="font-semibold">Form belum valid. Periksa field yang ditandai.</p>
+                        </div>
+                    @endif
 
-							<hr class="border-gray-200 dark:border-gray-700">
-
-							{{-- Memperhatikan --}}
-							<div>
-								<div class="mb-3 flex items-center justify-between">
-									<label class="block text-sm font-medium text-gray-900 dark:text-white">Memperhatikan <span class="font-normal text-gray-400">(Opsional)</span></label>
-									<button
-										type="button"
-										onclick="addInput('memperhatikan')"
-										class="inline-flex cursor-pointer items-center text-sm font-medium text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-500"
-									>
-										<svg
-											xmlns="http://www.w3.org/2000/svg"
-											viewBox="0 0 20 20"
-											fill="currentColor"
-											class="h-4 w-4"
-										>
-											<path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" />
-										</svg>
-										Tambah Poin
-									</button>
-								</div>
-								<div id="memperhatikan-container" class="space-y-3">
-									{{-- Dynamic inputs --}}
-								</div>
-							</div>
-						</div>
-					</section>
-
-					{{-- Section 3: Diktum --}}
-					<section class="overflow-hidden rounded-lg border border-slate-800 bg-slate-900 shadow-lg">
-						<div class="border-b border-slate-800 bg-slate-800 px-6 py-4">
-							<h2 class="text-lg font-semibold text-gray-900 dark:text-white">3. Diktum Keputusan</h2>
-							<p class="text-sm text-gray-400">Isi keputusan yang ditetapkan.</p>
-						</div>
-						<div class="space-y-6 p-6">
-							<div>
-								<label for="menetapkan" class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">Menetapkan</label>
-								<textarea
-								 name="menetapkan"
-								 id="menetapkan"
-								 rows="2"
-								 class="border-default-medium text-heading rounded-base shadow-xs placeholder:text-body focus:ring-none block w-full border bg-gray-50 p-3.5 text-sm focus:outline-2 focus:outline-purple-600 dark:bg-gray-700 dark:focus:outline-purple-400"
-								 placeholder="Contoh: KEPUTUSAN KEPALA DINAS TENTANG..."
-								></textarea>
-							</div>
-
-							<div>
-								<div class="mb-3 flex items-center justify-between">
-									<label class="block text-sm font-medium text-gray-900 dark:text-white">Amar Putusan (Diktum)</label>
-									<button
-										type="button"
-										onclick="addDiktum()"
-										class="inline-flex cursor-pointer items-center text-sm font-medium text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-500"
-									>
-										<svg
-											xmlns="http://www.w3.org/2000/svg"
-											viewBox="0 0 20 20"
-											fill="currentColor"
-											class="h-4 w-4"
-										>
-											<path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" />
-										</svg>
-										Tambah Diktum
-									</button>
-								</div>
-								<div id="diktum-container" class="space-y-4">
-									{{-- Dynamic inputs --}}
-								</div>
-							</div>
-						</div>
-					</section>
-
-					{{-- Section 4: Penutup --}}
-					<section class="overflow-hidden rounded-lg border border-slate-800 bg-slate-900 shadow-lg">
-						<div class="border-b border-slate-800 bg-slate-800 px-6 py-4">
-							<h2 class="text-lg font-semibold text-gray-900 dark:text-white">4. Penutup</h2>
-							<p class="text-sm text-gray-400">Informasi penetapan dan penandatanganan.</p>
-						</div>
-						<div class="grid grid-cols-1 gap-6 p-6 md:grid-cols-2">
-							<div>
-								<label for="ditetapkan_di" class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">Ditetapkan di</label>
-								<input
-									type="text"
-									name="ditetapkan_di"
-									id="ditetapkan_di"
-									class="border-default-medium text-heading rounded-base shadow-xs placeholder:text-body focus:ring-none block w-full border bg-gray-50 p-3.5 text-sm focus:outline-2 focus:outline-purple-600 dark:bg-gray-700 dark:focus:outline-purple-400"
-									placeholder="Contoh: Jakarta"
-								>
-							</div>
-							<div>
-								<label for="pada_tanggal" class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">Pada Tanggal</label>
-								<input
-									type="date"
-									name="pada_tanggal"
-									id="pada_tanggal"
-									class="border-default-medium text-heading rounded-base shadow-xs placeholder:text-body focus:ring-none block w-full border bg-gray-50 p-3.5 text-sm focus:outline-2 focus:outline-purple-600 dark:bg-gray-700 dark:focus:outline-purple-400"
-								>
-							</div>
-							<div class="md:col-span-2">
-								<label for="jabatan_penandatangan" class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">Jabatan Penandatangan</label>
-								<input
-									type="text"
-									name="jabatan_penandatangan"
-									id="jabatan_penandatangan"
-									value="BUPATI BUOL"
-									class="border-default-medium text-heading rounded-base shadow-xs placeholder:text-body focus:ring-none block w-full border bg-gray-50 p-3.5 text-sm focus:outline-2 focus:outline-purple-600 dark:bg-gray-700 dark:focus:outline-purple-400"
-								>
-							</div>
-							<div class="md:col-span-2">
-								<label for="nama_penandatangan" class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">Nama Penandatangan</label>
-								<input
-									type="text"
-									name="nama_penandatangan"
-									id="nama_penandatangan"
-									value="RISHARYUDI TRIWIBOWO"
-									class="border-default-medium text-heading rounded-base shadow-xs placeholder:text-body focus:ring-none block w-full border bg-gray-50 p-3.5 text-sm focus:outline-2 focus:outline-purple-600 dark:bg-gray-700 dark:focus:outline-purple-400"
-								>
-							</div>
-						</div>
-					</section>
-
-					{{-- Action Bar --}}
-					<div class="flex flex-wrap items-center justify-end gap-3">
-						<button type="reset" class="text-gray-200 bg-slate-800 border border-slate-600 hover:bg-slate-700 hover:text-white focus:ring-slate-500 shadow-xs rounded-base box-border cursor-pointer px-4 py-2.5 text-sm font-medium leading-5 focus:outline-none focus:ring-4">
-							Batal
-						</button>
-
-						<button
-							type="submit"
-							name="action"
-							value="preview"
-							class="rounded-base bg-linear-to-r from-purple-600 to-blue-500 hover:bg-linear-to-br cursor-pointer px-4 py-2.5 text-center text-sm font-medium leading-5 text-white focus:outline-none focus:ring-4 focus:ring-purple-500"
-						>
-							Preview Surat Keputusan
-						</button>
-
-											</div>
-				</form>
-			</div>
-		</main>
-	</div>
+                    @include('pages.sk-form.sections.title')
+                    @include('pages.sk-form.sections.konsiderans')
+                    @include('pages.sk-form.sections.diktum')
+                    @include('pages.sk-form.sections.penutup')
+                    @include('pages.sk-form.sections.actions')
+                </form>
+            </div>
+        </main>
+    </div>
 @endsection
+
+@php
+    $draft = $draft ?? [];
+    $initialDynamicValues = [
+        'menimbang' => old('menimbang', $draft['menimbang'] ?? []),
+        'mengingat' => old('mengingat', $draft['mengingat'] ?? []),
+        'memperhatikan' => old('memperhatikan', $draft['memperhatikan'] ?? []),
+        'diktum' => old('diktum', $draft['diktum'] ?? []),
+    ];
+@endphp
+
 @push('scripts')
-	<script>
-		const DIKTUM_LABELS = [
-			'KESATU', 'KEDUA', 'KETIGA', 'KEEMPAT', 'KELIMA',
-			'KEENAM', 'KETUJUH', 'KEDELAPAN', 'KESEMBILAN', 'KESEPULUH'
-		];
+    <script>
+        const DIKTUM_LABELS = [
+            'KESATU', 'KEDUA', 'KETIGA', 'KEEMPAT', 'KELIMA',
+            'KEENAM', 'KETUJUH', 'KEDELAPAN', 'KESEMBILAN', 'KESEPULUH'
+        ];
+        const FORM_STORAGE_KEY = 'simak_hukum_sk_form_draft';
+        const IS_FRESH_MODE = @json($fresh ?? false);
+        const HAS_SERVER_DRAFT = @json($hasServerDraft ?? false);
+        const HAS_OLD_INPUT = @json($errors->any());
+        const INITIAL_DYNAMIC_VALUES = {!! json_encode($initialDynamicValues, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!};
 
-		document.addEventListener('DOMContentLoaded', () => {
-			addInput('menimbang', 'bahwa dalam rangka...');
-			addInput('mengingat', 'Undang-Undang Nomor ...');
-			addDiktum();
-		});
+        const DYNAMIC_TEXTAREA_CLASSES = 'w-full rounded-xl border border-slate-300 bg-white py-2 pl-26 pr-12 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-cyan-400 dark:focus:ring-cyan-500/20';
+        let autosaveTimer;
+        let lastSavedPayload = '';
+        let toastTimer;
+        let isInitializing = true;
+        let dynamicValuesSource = { ...INITIAL_DYNAMIC_VALUES };
 
-		function updateRemoveButtons(container) {
-			const groups = container.querySelectorAll('.group');
-			groups.forEach(group => {
-				const btn = group.querySelector('button');
-				if (btn) btn.style.display = groups.length > 1 ? '' : 'none';
-			});
-		}
+        document.addEventListener('DOMContentLoaded', () => {
+            if (IS_FRESH_MODE) {
+                localStorage.removeItem(FORM_STORAGE_KEY);
+            }
 
-		function createInputGroup(type, placeholder) {
-			const container = document.getElementById(`${type}-container`);
-			if (!container) return;
+            tryRestoreDraftForCreate();
 
-			const wrapper = document.createElement('div');
-			wrapper.className = 'relative group';
+            initializeList('menimbang', 'bahwa dalam rangka...');
+            initializeList('mengingat', 'Undang-Undang Nomor ...');
+            initializeList('memperhatikan');
+            initializeDiktumList();
+            bindPreviewDraftStorage();
+            bindAutosave();
+            isInitializing = false;
+        });
 
-			const textarea = document.createElement('textarea');
-			textarea.name = `${type}[]`;
-			textarea.rows = 2;
-			textarea.placeholder = placeholder;
-			textarea.className = `
-				w-full rounded-base border border-default-medium
-				bg-gray-50 dark:bg-gray-700
-				text-sm text-heading
-				p-3.5 pr-12
-				shadow-xs
-				placeholder:text-body
-				focus:outline-2 focus:outline-purple-600
-				dark:focus:outline-purple-400
-			`;
+        function updateRemoveButtons(container) {
+            const groups = container.querySelectorAll('.group');
+            groups.forEach(group => {
+                const btn = group.querySelector('button');
+                if (btn) {
+                    btn.style.display = groups.length > 1 ? '' : 'none';
+                }
+            });
+        }
 
-			const removeBtn = document.createElement('button');
-			removeBtn.type = 'button';
-			removeBtn.className = `
-				absolute top-2 right-2 z-10
-				p-1.5 rounded-md
-				bg-white/80 dark:bg-gray-800/80
-				text-gray-400
-				hover:text-red-600 hover:bg-red-50
-				dark:text-gray-500
-				dark:hover:text-red-500 dark:hover:bg-red-900/20
-				opacity-0 group-hover:opacity-100 focus:opacity-100
-				cursor-pointer
-			`;
-			removeBtn.innerHTML = `
-				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-					fill="currentColor" class="w-4 h-4">
-					<path fill-rule="evenodd"
-						d="M8.75 1A2.75 2.75 0 006 3.75v.443
-						c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482
-						l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807
-						a2.75 2.75 0 002.742-2.53l.841-10.52.149.023
-						a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75
-						A2.75 2.75 0 0011.25 1h-2.5z" clip-rule="evenodd"/>
-				</svg>
-			`;
+        function createInputGroup(type, placeholder, value = '') {
+            const container = document.getElementById(`${type}-container`);
+            if (!container) return;
+            const nextIndex = container.querySelectorAll('.group').length;
 
-			removeBtn.onclick = () => {
-				wrapper.remove();
-				updateRemoveButtons(container);
-			};
+            const wrapper = document.createElement('div');
+            wrapper.className = 'relative group';
+            wrapper.dataset.type = type;
 
-			wrapper.appendChild(textarea);
-			wrapper.appendChild(removeBtn);
-			container.appendChild(wrapper);
+            const labelAnchor = document.createElement('div');
+            labelAnchor.className = 'pointer-events-none absolute left-0 top-2 flex w-24 justify-end pr-1';
 
-			updateRemoveButtons(container);
-		}
+            const label = document.createElement('span');
+            label.dataset.itemLabel = 'true';
+            label.className = 'inline-flex items-center justify-end rounded-md bg-slate-100 px-2 py-1 text-right text-xs font-semibold text-slate-700 dark:bg-slate-700 dark:text-slate-100';
+            label.textContent = getItemLabel(type, nextIndex);
+            labelAnchor.appendChild(label);
 
-		function addInput(type, placeholder = '') {
-			createInputGroup(type, placeholder || `Isi poin ${type}...`);
-		}
+            const textarea = document.createElement('textarea');
+            textarea.name = `${type}[]`;
+            textarea.rows = 3;
+            textarea.placeholder = placeholder;
+            textarea.value = value;
+            textarea.className = DYNAMIC_TEXTAREA_CLASSES;
 
-		function addDiktum() {
-			const container = document.getElementById('diktum-container');
-			const count = container.children.length;
-			const label = DIKTUM_LABELS[count] || `Diktum Ke-${count + 1}`;
-			createInputGroup('diktum', `${label}: ...`);
-		}
-	</script>
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.className = 'absolute right-2 top-2 z-10 cursor-pointer rounded-md bg-white/90 p-1.5 text-slate-400 opacity-0 transition hover:bg-red-50 hover:text-red-600 focus:opacity-100 group-hover:opacity-100 dark:bg-slate-900/90 dark:text-slate-500 dark:hover:bg-red-900/20 dark:hover:text-red-400';
+            removeBtn.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" class="h-4 w-4" stroke="currentColor" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 7.5h12m-10.5 0V6a1.5 1.5 0 011.5-1.5h6A1.5 1.5 0 0116.5 6v1.5m-9 0v10.125A2.625 2.625 0 0010.125 20.25h3.75A2.625 2.625 0 0016.5 17.625V7.5m-6 3v6m3-6v6" />
+                </svg>
+            `;
+
+            removeBtn.onclick = () => {
+                wrapper.remove();
+                refreshDynamicLabels(type);
+                scheduleAutosave(!isInitializing);
+            };
+
+            wrapper.appendChild(labelAnchor);
+            wrapper.appendChild(textarea);
+            wrapper.appendChild(removeBtn);
+            container.appendChild(wrapper);
+
+            refreshDynamicLabels(type);
+        }
+
+        function addInput(type, placeholder = '') {
+            createInputGroup(type, placeholder || `Isi poin ${type}...`);
+            scheduleAutosave(!isInitializing);
+        }
+
+        function addDiktum() {
+            const container = document.getElementById('diktum-container');
+            createInputGroup('diktum', 'Isi amar putusan...');
+            scheduleAutosave(!isInitializing);
+        }
+
+        function initializeList(type, defaultPlaceholder = '') {
+            const values = Array.isArray(dynamicValuesSource[type])
+                ? dynamicValuesSource[type].filter(value => typeof value === 'string' && value.trim() !== '')
+                : [];
+
+            if (values.length === 0) {
+                if (type !== 'memperhatikan') {
+                    createInputGroup(type, defaultPlaceholder || `Isi poin ${type}...`);
+                }
+                return;
+            }
+
+            values.forEach(value => {
+                createInputGroup(type, defaultPlaceholder || `Isi poin ${type}...`, value);
+            });
+
+            refreshDynamicLabels(type);
+        }
+
+        function initializeDiktumList() {
+            const values = Array.isArray(dynamicValuesSource.diktum)
+                ? dynamicValuesSource.diktum.filter(value => typeof value === 'string' && value.trim() !== '')
+                : [];
+
+            if (values.length === 0) {
+                const label = DIKTUM_LABELS[0] || 'Diktum Ke-1';
+                createInputGroup('diktum', `Isi amar putusan...`);
+                return;
+            }
+
+            values.forEach((value, index) => {
+                createInputGroup('diktum', 'Isi amar putusan...', value);
+            });
+
+            refreshDynamicLabels('diktum');
+        }
+
+        function refreshDynamicLabels(type) {
+            const container = document.getElementById(`${type}-container`);
+            if (!container) {
+                return;
+            }
+
+            const groups = container.querySelectorAll('.group');
+            groups.forEach((group, index) => {
+                const label = group.querySelector('[data-item-label]');
+                if (label) {
+                    label.textContent = getItemLabel(type, index);
+                }
+            });
+
+            updateRemoveButtons(container);
+        }
+
+        function getItemLabel(type, index) {
+            if (type === 'menimbang') {
+                return `${toAlphabetIndex(index)}.`;
+            }
+
+            if (type === 'mengingat' || type === 'memperhatikan') {
+                return `${index + 1}.`;
+            }
+
+            if (type === 'diktum') {
+                return DIKTUM_LABELS[index] || `DIKTUM ${index + 1}`;
+            }
+
+            return `${index + 1}.`;
+        }
+
+        function toAlphabetIndex(index) {
+            let current = index;
+            let result = '';
+
+            do {
+                result = String.fromCharCode(97 + (current % 26)) + result;
+                current = Math.floor(current / 26) - 1;
+            } while (current >= 0);
+
+            return result;
+        }
+
+        function bindPreviewDraftStorage() {
+            const form = document.getElementById('sk-form');
+            if (!form) {
+                return;
+            }
+
+            form.addEventListener('submit', event => {
+                const submitter = event.submitter || document.activeElement;
+                if (!submitter || submitter.name !== 'action' || submitter.value !== 'preview') {
+                    return;
+                }
+
+                saveDraftToStorage(false);
+            });
+        }
+
+        function tryRestoreDraftForCreate() {
+            if (IS_FRESH_MODE || HAS_SERVER_DRAFT || HAS_OLD_INPUT) {
+                return;
+            }
+
+            const rawDraft = localStorage.getItem(FORM_STORAGE_KEY);
+            if (!rawDraft) {
+                return;
+            }
+
+            try {
+                const parsedDraft = JSON.parse(rawDraft);
+                if (!parsedDraft || typeof parsedDraft !== 'object') {
+                    return;
+                }
+
+                applyStaticDraftValues(parsedDraft);
+                dynamicValuesSource = {
+                    menimbang: sanitizeArray(parsedDraft.menimbang),
+                    mengingat: sanitizeArray(parsedDraft.mengingat),
+                    memperhatikan: sanitizeArray(parsedDraft.memperhatikan),
+                    diktum: sanitizeArray(parsedDraft.diktum),
+                };
+            } catch (error) {
+                // Abaikan draft rusak agar form tetap bisa dipakai normal.
+            }
+        }
+
+        function applyStaticDraftValues(draft) {
+            setInputValueIfEditable('nomor_surat', draft.nomor_surat);
+            setInputValueIfEditable('sk_title', draft.sk_title);
+            setInputValueIfEditable('menetapkan', draft.menetapkan);
+            setInputValueIfEditable('pada_tanggal', draft.pada_tanggal);
+        }
+
+        function setInputValueIfEditable(id, value) {
+            const element = document.getElementById(id);
+            if (!element || element.hasAttribute('readonly') || element.disabled) {
+                return;
+            }
+
+            if (typeof value === 'string' && value.trim() !== '' && element.value.trim() === '') {
+                element.value = value;
+            }
+        }
+
+        function sanitizeArray(value) {
+            if (!Array.isArray(value)) {
+                return [];
+            }
+
+            return value.filter(item => typeof item === 'string' && item.trim() !== '');
+        }
+
+        function bindAutosave() {
+            const form = document.getElementById('sk-form');
+            if (!form) {
+                return;
+            }
+
+            form.addEventListener('input', () => scheduleAutosave());
+            form.addEventListener('change', () => scheduleAutosave());
+            form.addEventListener('focusout', () => scheduleAutosave(true), true);
+        }
+
+        function scheduleAutosave(force = false) {
+            clearTimeout(autosaveTimer);
+            autosaveTimer = setTimeout(() => {
+                saveDraftToStorage(force);
+            }, force ? 50 : 500);
+        }
+
+        function saveDraftToStorage(forceToast = true) {
+            const form = document.getElementById('sk-form');
+            if (!form) {
+                return;
+            }
+
+            const payload = collectDraftPayload(form);
+            const serialized = JSON.stringify(payload);
+
+            if (serialized === lastSavedPayload) {
+                return;
+            }
+
+            localStorage.setItem(FORM_STORAGE_KEY, serialized);
+            lastSavedPayload = serialized;
+
+            if (forceToast) {
+                showAutosaveToast();
+            }
+        }
+
+        function collectDraftPayload(form) {
+            const formData = new FormData(form);
+            return {
+                saved_at: new Date().toISOString(),
+                nomor_surat: formData.get('nomor_surat') || '',
+                sk_title: formData.get('sk_title') || '',
+                menimbang: formData.getAll('menimbang[]'),
+                mengingat: formData.getAll('mengingat[]'),
+                memperhatikan: formData.getAll('memperhatikan[]'),
+                menetapkan: formData.get('menetapkan') || '',
+                diktum: formData.getAll('diktum[]'),
+                ditetapkan_di: formData.get('ditetapkan_di') || '',
+                pada_tanggal: formData.get('pada_tanggal') || '',
+                jabatan_penandatangan: formData.get('jabatan_penandatangan') || '',
+                nama_penandatangan: formData.get('nama_penandatangan') || '',
+            };
+        }
+
+        function showAutosaveToast() {
+            const toast = document.getElementById('autosave-toast');
+            if (!toast) {
+                return;
+            }
+
+            toast.classList.remove('opacity-0');
+            toast.classList.add('opacity-100');
+
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0');
+            }, 1000);
+        }
+    </script>
 @endpush
