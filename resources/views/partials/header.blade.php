@@ -2,24 +2,18 @@
 	$menus = [['title' => 'Beranda', 'url' => '/', 'active' => url()->current() == url('/')], ['title' => 'Panduan', 'url' => '/guide', 'active' => url()->current() == url('/guide')], ['title' => 'Tentang', 'url' => '/about', 'active' => url()->current() == url('/about')], ['title' => 'Kontak', 'url' => '/contact', 'active' => url()->current() == url('/contact')]];
 @endphp
 
-<nav class="bg-neutral-primary border-default fixed start-0 top-0 z-20 w-full border-b">
-	<div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between p-4">
-		<a href="{{ url('/') }}" class="flex items-center space-x-3 rtl:space-x-reverse">
-			<svg
-				class="h-8 w-8 text-indigo-600 dark:text-indigo-400"
-				xmlns="http://www.w3.org/2000/svg"
-				fill="none"
-				viewBox="0 0 24 24"
-				stroke-width="1.5"
-				stroke="currentColor"
+<nav class="bg-neutral-primary border-default fixed top-0 z-20 w-full border-b">
+	<div class="relative mx-auto flex max-w-7xl flex-wrap items-center justify-between p-4">
+		<a href="{{ url('/') }}" class="flex items-center gap-2 rtl:space-x-reverse">
+			<img
+				src="{{ asset('assets/logo-buol.png') }}"
+				class="h-12 w-12 rounded-full"
+				alt="SIMAK Logo"
 			>
-				<path
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z"
-				/>
-			</svg>
-			<span class="text-heading mt-1 self-center whitespace-nowrap text-xl font-semibold">SIMAK</span>
+			<div class="flex flex-col">
+				<span class="text-heading whitespace-nowrap text-lg font-bold"><span class="text-indigo-600 dark:text-indigo-400">SIMAK</span>HUKUM</span>
+				<span class="text-sm">Bagian Hukum Kabupaten Buol</span>
+			</div>
 		</a>
 
 		<div class="flex space-x-3 md:order-2 md:space-x-0 rtl:space-x-reverse">
@@ -83,7 +77,7 @@
 				</svg>
 			</button>
 		</div>
-		<div class="hidden w-full items-center justify-between md:order-1 md:flex md:w-auto" id="navbar-sticky">
+		<div class="hidden w-full items-center justify-between md:absolute md:left-1/2 md:top-1/2 md:flex md:w-auto md:-translate-x-1/2 md:-translate-y-1/2" id="navbar-sticky">
 			<ul class="border-default rounded-base bg-neutral-secondary-soft md:bg-neutral-primary mt-4 flex flex-col border p-4 font-medium md:mt-0 md:flex-row md:space-x-8 md:border-0 md:p-0 rtl:space-x-reverse">
 				@foreach ($menus as $menu)
 					<li>
