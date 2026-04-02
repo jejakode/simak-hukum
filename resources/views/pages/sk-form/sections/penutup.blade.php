@@ -14,14 +14,6 @@
         />
 
         <x-sk-form.input
-            id="pada_tanggal"
-            name="pada_tanggal"
-            label="Pada Tanggal"
-            type="date"
-            :value="$draft['pada_tanggal'] ?? ''"
-        />
-
-        <x-sk-form.input
             id="jabatan_penandatangan"
             name="jabatan_penandatangan"
             label="Jabatan Penandatangan"

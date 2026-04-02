@@ -19,8 +19,8 @@
 		<meta name="twitter:title" content="@yield('meta_title', 'SIMAK HUKUM - Sistem Informasi Manajemen Surat Keputusan')">
 		<meta name="twitter:description" content="@yield('meta_description', 'SIMAK HUKUM - Sistem Informasi Manajemen Surat Keputusan untuk penyusunan, pratinjau, dan ekspor dokumen SK.')">
 		<meta name="twitter:image" content="@yield('meta_image', asset('assets/hero.png'))">
-		<link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
-		<link rel="shortcut icon" href="{{ asset('favicon.svg') }}">
+		<link rel="icon" type="image/svg+xml" href="{{ asset('assets/logo-buol.png') }}">
+		<link rel="shortcut icon" href="{{ asset('assets/logo-buol.png') }}">
 
 		<title>SIMAK HUKUM - Sistem Informasi Manajemen Surat Keputusan</title>
 

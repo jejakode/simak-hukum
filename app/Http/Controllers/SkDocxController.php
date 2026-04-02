@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use PhpOffice\PhpWord\TemplateProcessor;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use ZipArchive;
 
 class SkDocxController extends Controller
 {
@@ -44,16 +45,45 @@ class SkDocxController extends Controller
         $template->setValue('menetapkan', $data['menetapkan'] ?? '');
         $template->setValue('diktum', $this->buildDiktumList($data['diktum'] ?? []));
         $template->setValue('ditetapkan_di', $data['ditetapkan_di'] ?? '');
-        $template->setValue('pada_tanggal', $this->formatDate($data['pada_tanggal'] ?? ''));
+        $template->setValue('pada_tanggal', '');
         $template->setValue('jabatan_penandatangan', $data['jabatan_penandatangan'] ?? '');
         $template->setValue('nama_penandatangan', $data['nama_penandatangan'] ?? '');
 
         $tempFile = tempnam(sys_get_temp_dir(), 'sk_');
         $template->saveAs($tempFile);
 
-        $filename = 'surat_keputusan_' . now()->format('Ymd_His') . '.docx';
+        $baseFilename = 'surat_keputusan_' . now()->format('Ymd_His');
+        $lampiranFiles = $this->resolveLampiranFiles($data['lampiran'] ?? []);
 
-        return response()->download($tempFile, $filename)->deleteFileAfterSend(true);
+        if (empty($lampiranFiles)) {
+            return response()->download($tempFile, $baseFilename . '.docx')->deleteFileAfterSend(true);
+        }
+
+        $zipPath = tempnam(sys_get_temp_dir(), 'sk_paket_');
+        if ($zipPath === false) {
+            return response()->download($tempFile, $baseFilename . '.docx')->deleteFileAfterSend(true);
+        }
+
+        $zip = new ZipArchive();
+        if ($zip->open($zipPath, ZipArchive::OVERWRITE) !== true) {
+            @unlink($zipPath);
+            return response()->download($tempFile, $baseFilename . '.docx')->deleteFileAfterSend(true);
+        }
+
+        $zip->addFile($tempFile, $baseFilename . '.docx');
+        $usedNames = [];
+
+        foreach ($lampiranFiles as $index => $lampiran) {
+            $safeName = $this->uniqueLampiranName($lampiran['name'], $usedNames, $index + 1);
+            $zip->addFile($lampiran['full_path'], 'lampiran/' . $safeName);
+        }
+
+        $zip->close();
+        @unlink($tempFile);
+
+        return response()
+            ->download($zipPath, 'paket_sk_dan_lampiran_' . now()->format('Ymd_His') . '.zip')
+            ->deleteFileAfterSend(true);
     }
 
     private function buildLetterList(array $items): string
@@ -98,17 +128,37 @@ class SkDocxController extends Controller
         return implode("\n", $lines);
     }
 
-    private function formatDate(string $date): string
+    private function resolveLampiranFiles(mixed $lampiran): array
     {
-        if (trim($date) === '') {
-            return '';
+        if (!is_array($lampiran)) {
+            return [];
         }
 
-        try {
-            return \Carbon\Carbon::createFromFormat('Y-m-d', $date)->isoFormat('D MMMM Y');
-        } catch (\Throwable $exception) {
-            return $date;
+        $files = [];
+
+        foreach ($lampiran as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+
+            $name = trim((string) ($item['name'] ?? ''));
+            $path = trim((string) ($item['path'] ?? ''));
+            if ($name === '' || $path === '') {
+                continue;
+            }
+
+            $fullPath = storage_path('app/' . $path);
+            if (!file_exists($fullPath)) {
+                continue;
+            }
+
+            $files[] = [
+                'name' => $name,
+                'full_path' => $fullPath,
+            ];
         }
+
+        return $files;
     }
 
     private function filterArray(array $items): array
@@ -116,5 +166,32 @@ class SkDocxController extends Controller
         return array_values(array_filter($items, static function ($value) {
             return is_string($value) && trim($value) !== '';
         }));
+    }
+
+    private function uniqueLampiranName(string $originalName, array &$usedNames, int $sequence): string
+    {
+        $name = str_replace(['\\', '/'], '_', trim($originalName));
+        if ($name === '') {
+            $name = 'lampiran_' . $sequence . '.docx';
+        }
+
+        $extension = pathinfo($name, PATHINFO_EXTENSION);
+        if ($extension === '') {
+            $name .= '.docx';
+            $extension = 'docx';
+        }
+
+        $base = pathinfo($name, PATHINFO_FILENAME);
+        $candidate = $base . '.' . $extension;
+        $counter = 2;
+
+        while (in_array(strtolower($candidate), $usedNames, true)) {
+            $candidate = $base . ' (' . $counter . ').' . $extension;
+            $counter++;
+        }
+
+        $usedNames[] = strtolower($candidate);
+
+        return $candidate;
     }
 }

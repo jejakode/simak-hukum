@@ -10,7 +10,7 @@
             label="Nomor Surat"
             :value="$draft['nomor_surat'] ?? ''"
             placeholder="Contoh: 800 / BKPSDM / 2024"
-            help="Format nomor surat keputusan."
+            help="Opsional. Isi jika nomor surat sudah tersedia."
         />
 
         <x-sk-form.textarea

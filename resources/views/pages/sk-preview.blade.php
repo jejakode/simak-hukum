@@ -83,6 +83,7 @@
 		$mengingatItems = array_values(array_filter($mengingat ?? [], fn($item) => is_string($item) && trim($item) !== ''));
 		$memperhatikanItems = array_values(array_filter($memperhatikan ?? [], fn($item) => is_string($item) && trim($item) !== ''));
 		$diktumItems = array_values(array_filter($diktum ?? [], fn($item) => is_string($item) && trim($item) !== ''));
+		$lampiranItems = array_values(array_filter($lampiran ?? [], fn($item) => is_array($item) && is_string($item['name'] ?? null) && trim($item['name']) !== ''));
 		$diktumLabels = ['KESATU', 'KEDUA', 'KETIGA', 'KEEMPAT', 'KELIMA', 'KEENAM', 'KETUJUH', 'KEDELAPAN', 'KESEMBILAN', 'KESEPULUH'];
 	@endphp
 
@@ -115,11 +116,22 @@
 							</a>
 							<a href="{{ route('sk.docx') }}" class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-300 bg-emerald-50/80 px-4 py-2.5 text-sm font-semibold text-emerald-800 shadow-sm transition hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-200 dark:hover:bg-emerald-900/60 sm:w-auto">
 								<x-heroicon-o-arrow-down-tray class="h-4 w-4" />
-								Download DOCX
+								{{ empty($lampiranItems) ? 'Download DOCX' : 'Download Paket DOCX' }}
 							</a>
 						</div>
 					</div>
 				</div>
+
+				@if (!empty($lampiranItems))
+					<div class="mb-6 rounded-xl border border-sky-200 bg-sky-50/80 px-4 py-3 text-sm text-sky-900 dark:border-sky-900/60 dark:bg-sky-950/40 dark:text-sky-100">
+						<p class="font-semibold">Lampiran DOCX akan ikut dalam paket unduhan:</p>
+						<ul class="mt-1 list-disc pl-5">
+							@foreach ($lampiranItems as $item)
+								<li>{{ $item['name'] }}</li>
+							@endforeach
+						</ul>
+					</div>
+				@endif
 
 				<div class="document-paper document-preview shadow-lg">
 					<header class="mb-8 text-center">
@@ -138,7 +150,9 @@
 
 					<div class="mb-8 text-center">
 						<h2 class="judul-utama">KEPUTUSAN BUPATI</h2>
-						<p>NOMOR : {{ $nomor_surat ?: '[NOMOR SURAT]' }}</p>
+						@if (trim((string) $nomor_surat) !== '')
+							<p>NOMOR : {{ $nomor_surat }}</p>
+						@endif
 						<p class="tentang">TENTANG</p>
 						<h3 class="judul-detail">{{ $sk_title ?: '[JUDUL SURAT KEPUTUSAN]' }}</h3>
 						<p class="mt-6" style="text-transform: uppercase;">BUPATI BUOL,</p>
@@ -186,7 +200,6 @@
 					<footer class="mt-16">
 						<div class="ml-auto w-1/2 text-left">
 							<p>Ditetapkan di {{ $ditetapkan_di ?: '[Tempat]' }}</p>
-							<p>pada tanggal {{ $pada_tanggal ? \Carbon\Carbon::parse($pada_tanggal)->isoFormat('D MMMM Y') : '[Tanggal]' }}</p>
 							<p class="mt-4">{{ $jabatan_penandatangan ?: '[JABATAN PENANDATANGAN]' }},</p>
 							<div class="h-24"></div>
 							<p class="underline">{{ $nama_penandatangan ?: '[NAMA PENANDATANGAN]' }}</p>

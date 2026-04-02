@@ -14,7 +14,7 @@
                     Draft tersimpan
                 </div>
 
-                <form id="sk-form" action="{{ route('sk.handle') }}" method="POST" class="mx-auto max-w-5xl space-y-8">
+                <form id="sk-form" action="{{ route('sk.handle') }}" method="POST" enctype="multipart/form-data" class="mx-auto max-w-5xl space-y-8">
                     @csrf
 
                     @if($errors->any())
@@ -27,6 +27,7 @@
                     @include('pages.sk-form.sections.konsiderans')
                     @include('pages.sk-form.sections.diktum')
                     @include('pages.sk-form.sections.penutup')
+                    @include('pages.sk-form.sections.lampiran')
                     @include('pages.sk-form.sections.actions')
                 </form>
             </div>
@@ -278,7 +279,6 @@
             setInputValueIfEditable('nomor_surat', draft.nomor_surat);
             setInputValueIfEditable('sk_title', draft.sk_title);
             setInputValueIfEditable('menetapkan', draft.menetapkan);
-            setInputValueIfEditable('pada_tanggal', draft.pada_tanggal);
         }
 
         function setInputValueIfEditable(id, value) {
@@ -351,7 +351,6 @@
                 menetapkan: formData.get('menetapkan') || '',
                 diktum: formData.getAll('diktum[]'),
                 ditetapkan_di: formData.get('ditetapkan_di') || '',
-                pada_tanggal: formData.get('pada_tanggal') || '',
                 jabatan_penandatangan: formData.get('jabatan_penandatangan') || '',
                 nama_penandatangan: formData.get('nama_penandatangan') || '',
             };

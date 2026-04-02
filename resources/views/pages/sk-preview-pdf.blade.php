@@ -90,9 +90,11 @@
         {{-- Judul dan Nomor Surat --}}
         <div class="text-center mb-8">
             <h2 class="judul-utama">KEPUTUSAN BUPATI</h2>
-            <div class="nomor-surat">
-                <p>NOMOR : {{ $nomor_surat ?? '[NOMOR SURAT]' }}</p>
-            </div>
+            @if(trim((string) ($nomor_surat ?? '')) !== '')
+                <div class="nomor-surat">
+                    <p>NOMOR : {{ $nomor_surat }}</p>
+                </div>
+            @endif
             <p class="tentang">TENTANG</p>
             <h3 class="judul-detail">{{ $sk_title ?? '[JUDUL SURAT KEPUTUSAN]' }}</h3>
             <p class="font-bold text-left mt-6" style="text-transform: uppercase;">BUPATI BUOL,</p>
@@ -168,7 +170,6 @@
         <footer class="mt-16">
             <div class="w-1/2 ml-auto text-left">
                 <p>Ditetapkan di {{ $ditetapkan_di ?? '[Tempat]' }}</p>
-                <p>pada tanggal {{ $pada_tanggal ? \Carbon\Carbon::createFromFormat('Y-m-d', $pada_tanggal)->isoFormat('D MMMM Y') : '[Tanggal]' }}</p>
                 <p class="mt-4 font-bold">{{ $jabatan_penandatangan ?? '[JABATAN PENANDATANGAN]' }},</p>
                 <div class="h-24"></div>
                 <p class="font-bold underline">{{ $nama_penandatangan ?? '[NAMA PENANDATANGAN]' }}</p>

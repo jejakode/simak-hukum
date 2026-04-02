@@ -6,8 +6,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use PhpOffice\PhpWord\TemplateProcessor;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Illuminate\Support\Str;
 
 class SkController extends Controller
 {
@@ -44,6 +43,7 @@ class SkController extends Controller
 
     public function newDraft(): RedirectResponse
     {
+        $this->deleteLampiranFiles(session()->get('sk_data.lampiran', []));
         session()->forget('sk_data');
 
         return redirect()->route('sk.create', ['fresh' => 1]);
@@ -59,6 +59,7 @@ class SkController extends Controller
 
         $action = $request->input('action', 'preview');
         $data = $this->normalizePayload($validated);
+        $data['lampiran'] = $this->storeLampiran($request, session()->get('sk_data.lampiran', []));
 
         $data['requested_output'] = $action;
 
@@ -100,7 +101,6 @@ class SkController extends Controller
             'menetapkan' => trim((string) ($validated['menetapkan'] ?? '')),
             'diktum' => $this->filterArray($validated['diktum'] ?? []),
             'ditetapkan_di' => self::FIXED_DITETAPKAN_DI,
-            'pada_tanggal' => trim((string) ($validated['pada_tanggal'] ?? '')),
             'jabatan_penandatangan' => self::FIXED_JABATAN_PENANDATANGAN,
             'nama_penandatangan' => self::FIXED_NAMA_PENANDATANGAN,
         ];
@@ -132,16 +132,16 @@ class SkController extends Controller
             'nomor_surat' => '',
             'menetapkan' => '',
             'ditetapkan_di' => self::FIXED_DITETAPKAN_DI,
-            'pada_tanggal' => '',
             'jabatan_penandatangan' => self::FIXED_JABATAN_PENANDATANGAN,
             'nama_penandatangan' => self::FIXED_NAMA_PENANDATANGAN,
+            'lampiran' => [],
         ], $data);
     }
 
     private function validationRules(): array
     {
         return [
-            'nomor_surat' => ['required', 'string', 'max:255'],
+            'nomor_surat' => ['nullable', 'string', 'max:255'],
             'sk_title' => ['required', 'string', 'max:2000'],
             'menimbang' => ['required', 'array', 'min:1'],
             'menimbang.*' => ['required', 'string', 'max:4000'],
@@ -152,8 +152,9 @@ class SkController extends Controller
             'menetapkan' => ['required', 'string', 'max:4000'],
             'diktum' => ['required', 'array', 'min:1'],
             'diktum.*' => ['required', 'string', 'max:4000'],
+            'lampiran_docx' => ['nullable', 'array'],
+            'lampiran_docx.*' => ['nullable', 'file', 'mimes:docx', 'max:10240'],
             'ditetapkan_di' => ['required', 'string', 'max:255'],
-            'pada_tanggal' => ['required', 'date_format:Y-m-d'],
             'jabatan_penandatangan' => ['required', 'string', 'max:255'],
             'nama_penandatangan' => ['required', 'string', 'max:255'],
         ];
@@ -166,7 +167,8 @@ class SkController extends Controller
             'array' => ':attribute harus berupa daftar.',
             'min' => ':attribute minimal :min poin.',
             'max' => ':attribute melebihi batas karakter.',
-            'date_format' => ':attribute harus menggunakan format tanggal yang valid.',
+            'mimes' => ':attribute harus berformat DOCX.',
+            'file' => ':attribute harus berupa file.',
         ];
     }
 
@@ -184,11 +186,88 @@ class SkController extends Controller
             'menetapkan' => 'Menetapkan',
             'diktum' => 'Diktum',
             'diktum.*' => 'Poin Diktum',
+            'lampiran_docx' => 'Lampiran DOCX',
+            'lampiran_docx.*' => 'Lampiran DOCX',
             'ditetapkan_di' => 'Ditetapkan di',
-            'pada_tanggal' => 'Pada Tanggal',
             'jabatan_penandatangan' => 'Jabatan Penandatangan',
             'nama_penandatangan' => 'Nama Penandatangan',
         ];
+    }
+
+    private function storeLampiran(Request $request, mixed $existing): array
+    {
+        $attachments = $this->sanitizeLampiran($existing);
+        $uploadedFiles = $request->file('lampiran_docx', []);
+
+        foreach ($uploadedFiles as $file) {
+            if (!$file || !$file->isValid()) {
+                continue;
+            }
+
+            $originalName = trim((string) $file->getClientOriginalName());
+            if ($originalName === '') {
+                $originalName = 'lampiran.docx';
+            }
+
+            $storageName = Str::uuid()->toString() . '.docx';
+            $storedPath = $file->storeAs('sk-lampiran', $storageName);
+
+            if (!$storedPath) {
+                continue;
+            }
+
+            $attachments[] = [
+                'name' => $originalName,
+                'path' => $storedPath,
+            ];
+        }
+
+        return $attachments;
+    }
+
+    private function sanitizeLampiran(mixed $attachments): array
+    {
+        if (!is_array($attachments)) {
+            return [];
+        }
+
+        $result = [];
+
+        foreach ($attachments as $attachment) {
+            if (!is_array($attachment)) {
+                continue;
+            }
+
+            $name = trim((string) ($attachment['name'] ?? ''));
+            $path = trim((string) ($attachment['path'] ?? ''));
+
+            if ($name === '' || $path === '') {
+                continue;
+            }
+
+            if (!file_exists(storage_path('app/' . $path))) {
+                continue;
+            }
+
+            $result[] = [
+                'name' => $name,
+                'path' => $path,
+            ];
+        }
+
+        return $result;
+    }
+
+    private function deleteLampiranFiles(mixed $attachments): void
+    {
+        $attachments = $this->sanitizeLampiran($attachments);
+
+        foreach ($attachments as $attachment) {
+            $path = storage_path('app/' . $attachment['path']);
+            if (file_exists($path)) {
+                @unlink($path);
+            }
+        }
     }
 
     private function downloadPdf(array $data): Response

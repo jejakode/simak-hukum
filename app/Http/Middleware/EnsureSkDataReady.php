@@ -25,19 +25,11 @@ class EnsureSkDataReady
 
     private function isReady(array $data): bool
     {
-        if (trim((string) ($data['nomor_surat'] ?? '')) === '') {
-            return false;
-        }
-
         if (trim((string) ($data['sk_title'] ?? '')) === '') {
             return false;
         }
 
         if (trim((string) ($data['menetapkan'] ?? '')) === '') {
-            return false;
-        }
-
-        if (trim((string) ($data['pada_tanggal'] ?? '')) === '') {
             return false;
         }
 
