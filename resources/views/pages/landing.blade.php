@@ -1,6 +1,9 @@
 @extends('layouts.app')
 
 @section('content')
+	@php
+		$legalPdfUrl = asset('legal/' . rawurlencode('DASAR HUKUM FORMAT PENYUSUNAN SURAT KEPUTUSAN BUPATI.pdf'));
+	@endphp
 	<div class="bg-gray-50 dark:bg-gray-900">
 		{{-- Hero Section --}}
 		<div class="relative isolate min-h-screen px-6 lg:px-8">
@@ -43,10 +46,10 @@
 								</svg>
 							</a>
 						</div>
-						<a href="{{ url('/guide') }}" class="text-body bg-neutral-primary-soft border-default hover:bg-neutral-secondary-medium hover:text-heading focus:ring-neutral-tertiary-soft shadow-xs inline-flex items-center gap-2 rounded-base border px-4 py-2.5 text-sm font-medium leading-5 focus:outline-none focus:ring-4">
+						<button type="button" id="legal-basis-trigger" class="text-body bg-neutral-primary-soft border-default hover:bg-neutral-secondary-medium hover:text-heading focus:ring-neutral-tertiary-soft shadow-xs inline-flex items-center gap-2 rounded-base border px-4 py-2.5 text-sm font-medium leading-5 focus:outline-none focus:ring-4">
 							<x-heroicon-o-document-text class="h-4 w-4" />
 							Dasar Hukum Format SK Bupati
-						</a>
+						</button>
 					</div>
 				</div>
 			</div>
@@ -139,3 +142,45 @@
 		</div>
 	</div>
 @endsection
+
+@push('scripts')
+	<script>
+		document.addEventListener('DOMContentLoaded', () => {
+			const legalBasisTrigger = document.getElementById('legal-basis-trigger');
+			const legalPdfUrl = @json($legalPdfUrl);
+
+			if (!legalBasisTrigger) {
+				return;
+			}
+
+			legalBasisTrigger.addEventListener('click', async () => {
+				if (typeof window.Swal === 'undefined') {
+					window.open(legalPdfUrl, '_blank', 'noopener');
+					return;
+				}
+
+				await window.Swal.fire({
+					title: 'Dasar Hukum Format SK Bupati',
+					width: '92vw',
+					padding: '1rem',
+					showConfirmButton: false,
+					showCloseButton: true,
+					html: `
+						<div style="height:min(78vh, 900px);">
+							<iframe
+								src="${legalPdfUrl}"
+								title="Dasar Hukum Format SK Bupati"
+								style="width:100%; height:100%; border:1px solid #e5e7eb; border-radius:10px;"
+							></iframe>
+						</div>
+						<div style="margin-top:10px; text-align:right;">
+							<a href="${legalPdfUrl}" target="_blank" rel="noopener" style="font-size:13px; color:#2563eb; text-decoration:underline;">
+								Buka di tab baru
+							</a>
+						</div>
+					`,
+				});
+			});
+		});
+	</script>
+@endpush

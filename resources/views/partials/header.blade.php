@@ -12,7 +12,7 @@
 			>
 			<div class="flex flex-col">
 				<span class="text-heading whitespace-nowrap text-lg font-bold"><span class="text-indigo-600 dark:text-indigo-400">SIMAK</span>HUKUM</span>
-				<span class="text-sm">Bagian Hukum Kabupaten Buol</span>
+				<span class="text-sm dark:text-gray-300">Bagian Hukum Kabupaten Buol</span>
 			</div>
 		</a>
 
