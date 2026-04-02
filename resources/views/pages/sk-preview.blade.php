@@ -87,7 +87,7 @@
 		$diktumLabels = ['KESATU', 'KEDUA', 'KETIGA', 'KEEMPAT', 'KELIMA', 'KEENAM', 'KETUJUH', 'KEDELAPAN', 'KESEMBILAN', 'KESEPULUH'];
 	@endphp
 
-	<div class="pt-26 bg-gradient-to-b from-slate-100 via-slate-100 to-slate-200 py-12 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+	<div class="bg-gradient-to-b from-slate-100 via-slate-100 to-slate-200 pb-12 pt-24 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
 		<div class="container mx-auto px-4 sm:px-6 lg:px-8">
 			<div class="mx-auto max-w-5xl">
 				<div class="mb-8 text-center">
@@ -133,7 +133,7 @@
 					</div>
 				@endif
 
-				<div class="document-paper document-preview shadow-lg">
+				<div class="document-paper document-preview overflow-x-auto shadow-lg">
 					<header class="mb-8 text-center">
 						<div class="kop-surat" style="position: relative; height: 180px; display: flex; flex-direction: column; align-items: center;">
 							<img
@@ -198,7 +198,7 @@
 					</main>
 
 					<footer class="mt-16">
-						<div class="ml-auto w-1/2 text-left">
+						<div class="ml-auto w-full text-left sm:w-1/2">
 							<p>Ditetapkan di {{ $ditetapkan_di ?: '[Tempat]' }}</p>
 							<p class="mt-4">{{ $jabatan_penandatangan ?: '[JABATAN PENANDATANGAN]' }},</p>
 							<div class="h-24"></div>

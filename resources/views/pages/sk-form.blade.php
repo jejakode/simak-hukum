@@ -2,7 +2,7 @@
 
 @section('content')
     <div class="min-h-screen bg-slate-100 text-slate-900 transition-colors dark:bg-slate-950 dark:text-slate-100">
-        <main class="pt-26 py-10">
+        <main class="pt-24 py-10">
             <div class="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="mb-8 text-center">
                     {{-- <span class="mb-2 inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-semibold tracking-wide text-blue-700 dark:border-cyan-700/40 dark:bg-cyan-900/30 dark:text-cyan-200">DRAFT</span> --}}
@@ -57,7 +57,7 @@
         const HAS_OLD_INPUT = @json($errors->any());
         const INITIAL_DYNAMIC_VALUES = {!! json_encode($initialDynamicValues, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!};
 
-        const DYNAMIC_TEXTAREA_CLASSES = 'w-full rounded-xl border border-slate-300 bg-white py-2 pl-26 pr-12 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-cyan-400 dark:focus:ring-cyan-500/20';
+        const DYNAMIC_TEXTAREA_CLASSES = 'w-full rounded-xl border border-slate-300 bg-white px-3 py-2 pr-12 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 sm:pl-24 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:border-cyan-400 dark:focus:ring-cyan-500/20';
         let autosaveTimer;
         let lastSavedPayload = '';
         let toastTimer;
@@ -100,7 +100,7 @@
             wrapper.dataset.type = type;
 
             const labelAnchor = document.createElement('div');
-            labelAnchor.className = 'pointer-events-none absolute left-0 top-2 flex w-24 justify-end pr-1';
+            labelAnchor.className = 'mb-2 sm:pointer-events-none sm:absolute sm:left-0 sm:top-2 sm:mb-0 sm:flex sm:w-24 sm:justify-end sm:pr-1';
 
             const label = document.createElement('span');
             label.dataset.itemLabel = 'true';
@@ -117,7 +117,7 @@
 
             const removeBtn = document.createElement('button');
             removeBtn.type = 'button';
-            removeBtn.className = 'absolute right-2 top-2 z-10 cursor-pointer rounded-md bg-white/90 p-1.5 text-slate-400 opacity-0 transition hover:bg-red-50 hover:text-red-600 focus:opacity-100 group-hover:opacity-100 dark:bg-slate-900/90 dark:text-slate-500 dark:hover:bg-red-900/20 dark:hover:text-red-400';
+            removeBtn.className = 'absolute right-2 top-2 z-10 cursor-pointer rounded-md bg-white/90 p-1.5 text-slate-400 opacity-100 transition hover:bg-red-50 hover:text-red-600 sm:opacity-0 sm:focus:opacity-100 sm:group-hover:opacity-100 dark:bg-slate-900/90 dark:text-slate-500 dark:hover:bg-red-900/20 dark:hover:text-red-400';
             removeBtn.innerHTML = `
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" class="h-4 w-4" stroke="currentColor" stroke-width="1.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 7.5h12m-10.5 0V6a1.5 1.5 0 011.5-1.5h6A1.5 1.5 0 0116.5 6v1.5m-9 0v10.125A2.625 2.625 0 0010.125 20.25h3.75A2.625 2.625 0 0016.5 17.625V7.5m-6 3v6m3-6v6" />

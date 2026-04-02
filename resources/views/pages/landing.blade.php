@@ -7,12 +7,12 @@
 	<div class="bg-gray-50 dark:bg-gray-900">
 		{{-- Hero Section --}}
 		<div class="relative isolate min-h-screen px-6 lg:px-8">
-			<div class="mx-auto max-w-2xl py-32 sm:py-48 lg:py-52">
+			<div class="mx-auto max-w-2xl py-28 sm:py-48 lg:py-52">
 				<div class="text-center">
 					<img
 						src="{{ asset('assets/hero.png') }}"
 						alt="Ilustrasi"
-						class="h-22 mx-auto mb-6"
+						class="mx-auto mb-6 h-20 sm:h-24"
 					>
 					<h1 class="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl dark:text-white">
 						Manajemen <span class="text-indigo-600 dark:text-indigo-400">Surat Keputusan Bupati</span>
@@ -21,7 +21,7 @@
 						Sistem yang dibuat untuk memanajemeni pembuatan Surat Keputusan Bupati secara efisien dan terstandarisasi di Lingkungan Pemerintah Kabupaten Buol.
 					</p>
 					<div class="mt-10 flex flex-col items-center gap-6">
-						<div class="flex items-center justify-center gap-x-6">
+						<div class="flex w-full flex-col items-center justify-center gap-3 sm:w-auto sm:flex-row sm:gap-x-6">
 							<a href="{{ url('/sk/create') }}" class="rounded-base bg-linear-to-br from-purple-600 to-blue-500 px-4 py-2.5 text-center text-sm font-medium leading-5 text-white hover:bg-linear-to-bl focus:outline-none focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-800">
 								Buat Surat Keputusan
 							</a>
@@ -159,21 +159,28 @@
 					return;
 				}
 
+				const isMobile = window.matchMedia('(max-width: 640px)').matches;
+
 				await window.Swal.fire({
 					title: 'Dasar Hukum Format SK Bupati',
-					width: '92vw',
-					padding: '1rem',
-					showConfirmButton: false,
+					width: isMobile ? '100vw' : '92vw',
+					padding: isMobile ? '0.5rem' : '1rem',
+					showConfirmButton: isMobile,
+					confirmButtonText: 'Tutup',
 					showCloseButton: true,
+					customClass: {
+						popup: isMobile ? 'rounded-lg' : 'rounded-2xl',
+						confirmButton: 'rounded-lg px-4 py-2',
+					},
 					html: `
-						<div style="height:min(78vh, 900px);">
+						<div style="height:${isMobile ? '72vh' : 'min(78vh, 900px)'};">
 							<iframe
 								src="${legalPdfUrl}"
 								title="Dasar Hukum Format SK Bupati"
-								style="width:100%; height:100%; border:1px solid #e5e7eb; border-radius:10px;"
+								style="width:100%; height:100%; border:1px solid #e5e7eb; border-radius:${isMobile ? '8px' : '10px'};"
 							></iframe>
 						</div>
-						<div style="margin-top:10px; text-align:right;">
+						<div style="margin-top:10px; text-align:${isMobile ? 'left' : 'right'};">
 							<a href="${legalPdfUrl}" target="_blank" rel="noopener" style="font-size:13px; color:#2563eb; text-decoration:underline;">
 								Buka di tab baru
 							</a>

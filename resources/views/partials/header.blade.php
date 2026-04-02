@@ -3,27 +3,27 @@
 @endphp
 
 <nav class="bg-neutral-primary border-default fixed top-0 z-20 w-full border-b">
-	<div class="relative mx-auto flex max-w-7xl flex-wrap items-center justify-between p-4">
-		<a href="{{ url('/') }}" class="flex items-center gap-2 rtl:space-x-reverse">
+	<div class="relative mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-3 py-3 sm:px-4 sm:py-4">
+		<a href="{{ url('/') }}" class="flex min-w-0 items-center gap-2 rtl:space-x-reverse">
 			<img
 				src="{{ asset('assets/logo-buol.png') }}"
-				class="h-12 w-12 rounded-full"
+				class="h-10 w-10 rounded-full sm:h-12 sm:w-12"
 				alt="SIMAK Logo"
 			>
-			<div class="flex flex-col">
-				<span class="text-heading whitespace-nowrap text-lg font-bold"><span class="text-indigo-600 dark:text-indigo-400">SIMAK</span>HUKUM</span>
-				<span class="text-sm dark:text-gray-300">Bagian Hukum Kabupaten Buol</span>
+			<div class="flex min-w-0 flex-col">
+				<span class="text-heading truncate whitespace-nowrap text-base font-bold sm:text-lg"><span class="text-indigo-600 dark:text-indigo-400">SIMAK</span> HUKUM</span>
+				<span class="truncate text-xs dark:text-gray-300 sm:text-sm">Bagian Hukum Kabupaten Buol</span>
 			</div>
 		</a>
 
-		<div class="flex space-x-3 md:order-2 md:space-x-0 rtl:space-x-reverse">
+		<div class="flex items-center gap-2 md:order-2 rtl:space-x-reverse">
 			<button
-				id="theme-toggle"
+				data-theme-toggle
 				type="button"
-				class="text-body bg-neutral-primary-soft border-default hover:bg-neutral-secondary-medium hover:text-heading focus:ring-neutral-tertiary-soft shadow-xs me-3 rounded-base border p-2 text-sm font-medium leading-5 focus:outline-none focus:ring-4 cursor-pointer"
+				class="text-body bg-neutral-primary-soft border-default hover:bg-neutral-secondary-medium hover:text-heading focus:ring-neutral-tertiary-soft shadow-xs rounded-base hidden cursor-pointer border p-2 text-sm font-medium leading-5 focus:outline-none focus:ring-4 md:inline-flex"
 			>
 				<svg
-					id="theme-toggle-dark-icon"
+					data-theme-dark-icon
 					class="hidden h-5 w-5"
 					fill="currentColor"
 					viewBox="0 0 20 20"
@@ -32,7 +32,7 @@
 					<path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
 				</svg>
 				<svg
-					id="theme-toggle-light-icon"
+					data-theme-light-icon
 					class="hidden h-5 w-5"
 					fill="currentColor"
 					viewBox="0 0 20 20"
@@ -46,7 +46,7 @@
 				</svg>
 				<span class="sr-only">Toggle Theme</span>
 			</button>
-			<a href="{{ url('/sk/create') }}" class="inline-flex items-center gap-2 rounded-base bg-linear-to-br hover:bg-linear-to-bl from-purple-600 to-blue-500 px-4 py-2.5 text-center text-sm font-medium leading-5 text-white focus:outline-none focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-800">
+			<a href="{{ url('/sk/create') }}" class="hidden items-center gap-2 rounded-base bg-linear-to-br hover:bg-linear-to-bl from-purple-600 to-blue-500 px-3 py-2 text-center text-sm font-medium leading-5 text-white focus:outline-none focus:ring-4 focus:ring-blue-300 sm:px-4 sm:py-2.5 md:inline-flex dark:focus:ring-blue-800">
 				<x-heroicon-o-document-text class="h-4 w-4" />
 				<span>Buat SK</span>
 			</a>
@@ -54,7 +54,7 @@
 			<button
 				data-collapse-toggle="navbar-sticky"
 				type="button"
-				class="text-body bg-neutral-primary-soft border-default hover:bg-neutral-secondary-medium hover:text-heading focus:ring-neutral-tertiary-soft shadow-xs me-3 rounded-base border p-2 text-sm font-medium leading-5 focus:outline-none focus:ring-4 cursor-pointer md:hidden"
+				class="text-body bg-neutral-primary-soft border-default hover:bg-neutral-secondary-medium hover:text-heading focus:ring-neutral-tertiary-soft shadow-xs rounded-base cursor-pointer border p-2 text-sm font-medium leading-5 focus:outline-none focus:ring-4 md:hidden"
 				aria-controls="navbar-sticky"
 				aria-expanded="false"
 			>
@@ -78,16 +78,53 @@
 			</button>
 		</div>
 		<div class="hidden w-full items-center justify-between md:absolute md:left-1/2 md:top-1/2 md:flex md:w-auto md:-translate-x-1/2 md:-translate-y-1/2" id="navbar-sticky">
-			<ul class="border-default rounded-base bg-neutral-secondary-soft md:bg-neutral-primary mt-4 flex flex-col border p-4 font-medium md:mt-0 md:flex-row md:space-x-8 md:border-0 md:p-0 rtl:space-x-reverse">
+			<ul class="border-default rounded-base bg-neutral-secondary-soft md:bg-neutral-primary mt-2 flex w-full flex-col space-y-1 border p-3 font-medium md:mt-0 md:w-auto md:flex-row md:space-x-8 md:space-y-0 md:border-0 md:p-0 rtl:space-x-reverse">
 				@foreach ($menus as $menu)
 					<li>
 						<a
 							href="{{ $menu['url'] }}"
-							class="{{ $menu['active'] ? 'md:text-purple-600 dark:md:text-purple-400' : 'text-heading hover:bg-neutral-tertiary md:hover:text-purple' }} block rounded-sm px-3 py-2 md:border-0 md:p-0 md:hover:bg-transparent md:dark:hover:bg-transparent"
+							class="{{ $menu['active'] ? 'md:text-purple-600 dark:md:text-purple-400' : 'text-heading hover:bg-neutral-tertiary md:hover:text-purple' }} block rounded-sm px-3 py-2.5 md:border-0 md:p-0 md:hover:bg-transparent md:dark:hover:bg-transparent"
 							aria-current="{{ $menu['active'] ? 'page' : false }}"
 						>{{ $menu['title'] }}</a>
 					</li>
 				@endforeach
+				<li class="border-default mt-2 border-t pt-2 md:hidden">
+					<button
+						data-theme-toggle
+						type="button"
+						class="text-body bg-neutral-primary-soft border-default hover:bg-neutral-secondary-medium hover:text-heading focus:ring-neutral-tertiary-soft shadow-xs rounded-base inline-flex w-full cursor-pointer items-center justify-center gap-2 border px-3 py-2.5 text-sm font-medium leading-5 focus:outline-none focus:ring-4"
+					>
+						<svg
+							data-theme-dark-icon
+							class="hidden h-5 w-5"
+							fill="currentColor"
+							viewBox="0 0 20 20"
+							xmlns="http://www.w3.org/2000/svg"
+						>
+							<path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
+						</svg>
+						<svg
+							data-theme-light-icon
+							class="hidden h-5 w-5"
+							fill="currentColor"
+							viewBox="0 0 20 20"
+							xmlns="http://www.w3.org/2000/svg"
+						>
+							<path
+								d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"
+								fill-rule="evenodd"
+								clip-rule="evenodd"
+							></path>
+						</svg>
+						<span>Tema</span>
+					</button>
+				</li>
+				<li class="mt-1 md:hidden">
+					<a href="{{ url('/sk/create') }}" class="inline-flex w-full items-center justify-center gap-2 rounded-base bg-linear-to-br hover:bg-linear-to-bl from-purple-600 to-blue-500 px-3 py-2.5 text-center text-sm font-medium leading-5 text-white focus:outline-none focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-800">
+						<x-heroicon-o-document-text class="h-4 w-4" />
+						<span>Buat SK</span>
+					</a>
+				</li>
 			</ul>
 		</div>
 	</div>
@@ -106,28 +143,55 @@
 		}
 
 		document.addEventListener('DOMContentLoaded', function() {
-			const themeToggleBtn = document.getElementById('theme-toggle');
-			const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
-			const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+			const themeToggleButtons = document.querySelectorAll('[data-theme-toggle]');
+			const navToggleBtn = document.querySelector('[data-collapse-toggle="navbar-sticky"]');
+			const navMenu = document.getElementById('navbar-sticky');
 
-			if (themeToggleBtn) {
-				if (document.documentElement.classList.contains('dark')) {
-					themeToggleLightIcon.classList.remove('hidden');
-				} else {
-					themeToggleDarkIcon.classList.remove('hidden');
-				}
-
-				themeToggleBtn.addEventListener('click', function() {
-					themeToggleDarkIcon.classList.toggle('hidden');
-					themeToggleLightIcon.classList.toggle('hidden');
-
-					if (document.documentElement.classList.contains('dark')) {
-						document.documentElement.classList.remove('dark');
-						localStorage.setItem('color-theme', 'light');
-					} else {
-						document.documentElement.classList.add('dark');
-						localStorage.setItem('color-theme', 'dark');
+			const syncThemeIcons = () => {
+				const isDark = document.documentElement.classList.contains('dark');
+				themeToggleButtons.forEach(button => {
+					const darkIcon = button.querySelector('[data-theme-dark-icon]');
+					const lightIcon = button.querySelector('[data-theme-light-icon]');
+					if (!darkIcon || !lightIcon) {
+						return;
 					}
+
+					darkIcon.classList.toggle('hidden', isDark);
+					lightIcon.classList.toggle('hidden', !isDark);
+				});
+			};
+
+			if (themeToggleButtons.length > 0) {
+				syncThemeIcons();
+				themeToggleButtons.forEach(button => {
+					button.addEventListener('click', function() {
+						if (document.documentElement.classList.contains('dark')) {
+							document.documentElement.classList.remove('dark');
+							localStorage.setItem('color-theme', 'light');
+						} else {
+							document.documentElement.classList.add('dark');
+							localStorage.setItem('color-theme', 'dark');
+						}
+
+						syncThemeIcons();
+					});
+				});
+			}
+
+			if (navToggleBtn && navMenu) {
+				navToggleBtn.addEventListener('click', function() {
+					const isExpanded = navToggleBtn.getAttribute('aria-expanded') === 'true';
+					navToggleBtn.setAttribute('aria-expanded', String(!isExpanded));
+					navMenu.classList.toggle('hidden');
+				});
+
+				navMenu.querySelectorAll('a').forEach(link => {
+					link.addEventListener('click', () => {
+						if (window.innerWidth < 768) {
+							navMenu.classList.add('hidden');
+							navToggleBtn.setAttribute('aria-expanded', 'false');
+						}
+					});
 				});
 			}
 		});

@@ -83,7 +83,7 @@
 					<h3 class="text-base font-semibold leading-7 text-gray-900 dark:text-white">Email</h3>
 					<div class="mt-2 text-gray-600 dark:text-gray-300">
 						<p>Pertanyaan Umum:</p>
-						<a href="mailto:bagianhukumsetdabuol@gmail.com" class="font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400">bagianhukumsetdabuol@gmail.com</a>
+						<a href="mailto:bagianhukumsetdabuol@gmail.com" class="break-all font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400">bagianhukumsetdabuol@gmail.com</a>
 					</div>
 				</div>
 			</div>
