@@ -75,6 +75,7 @@
             initializeList('mengingat', 'Undang-Undang Nomor ...');
             initializeList('memperhatikan');
             initializeDiktumList();
+            bindLampiranRemoveButtons();
             bindPreviewDraftStorage();
             bindAutosave();
             isInitializing = false;
@@ -370,6 +371,42 @@
                 toast.classList.remove('opacity-100');
                 toast.classList.add('opacity-0');
             }, 1000);
+        }
+
+        function bindLampiranRemoveButtons() {
+            document.addEventListener('click', event => {
+                const trigger = event.target.closest('[data-remove-lampiran=\"true\"]');
+                if (!trigger) {
+                    return;
+                }
+
+                const lampiranPath = trigger.getAttribute('data-lampiran-path');
+                if (!lampiranPath) {
+                    return;
+                }
+
+                const hiddenContainer = document.getElementById('remove-lampiran-inputs');
+                if (!hiddenContainer) {
+                    return;
+                }
+
+                const exists = Array.from(hiddenContainer.querySelectorAll('input[name=\"remove_lampiran[]\"]'))
+                    .some(input => input.value === lampiranPath);
+                if (!exists) {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'remove_lampiran[]';
+                    input.value = lampiranPath;
+                    hiddenContainer.appendChild(input);
+                }
+
+                const row = trigger.closest('li');
+                if (row) {
+                    row.remove();
+                }
+
+                scheduleAutosave(!isInitializing);
+            });
         }
     </script>
 @endpush

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -76,20 +75,6 @@ class SkController extends Controller
         return response()->view('pages.sk-preview', $data);
     }
 
-    public function pdf(Request $request): Response
-    {
-        $data = Session::get('sk_data');
-
-        return $this->downloadPdf($data);
-    }
-
-    public function docx(Request $request): BinaryFileResponse
-    {
-        $data = Session::get('sk_data');
-
-        return $this->downloadDocx($data);
-    }
-
     private function normalizePayload(array $validated): array
     {
         return [
@@ -153,7 +138,9 @@ class SkController extends Controller
             'diktum' => ['required', 'array', 'min:1'],
             'diktum.*' => ['required', 'string', 'max:4000'],
             'lampiran_docx' => ['nullable', 'array'],
-            'lampiran_docx.*' => ['nullable', 'file', 'mimes:docx', 'max:10240'],
+            'lampiran_docx.*' => ['nullable', 'file', 'mimes:docx,pdf,jpg,jpeg,png', 'max:10240'],
+            'remove_lampiran' => ['nullable', 'array'],
+            'remove_lampiran.*' => ['nullable', 'string'],
             'ditetapkan_di' => ['required', 'string', 'max:255'],
             'jabatan_penandatangan' => ['required', 'string', 'max:255'],
             'nama_penandatangan' => ['required', 'string', 'max:255'],
@@ -167,7 +154,7 @@ class SkController extends Controller
             'array' => ':attribute harus berupa daftar.',
             'min' => ':attribute minimal :min poin.',
             'max' => ':attribute melebihi batas karakter.',
-            'mimes' => ':attribute harus berformat DOCX.',
+            'mimes' => ':attribute harus berformat DOCX, PDF, JPG, JPEG, atau PNG.',
             'file' => ':attribute harus berupa file.',
         ];
     }
@@ -186,8 +173,10 @@ class SkController extends Controller
             'menetapkan' => 'Menetapkan',
             'diktum' => 'Diktum',
             'diktum.*' => 'Poin Diktum',
-            'lampiran_docx' => 'Lampiran DOCX',
-            'lampiran_docx.*' => 'Lampiran DOCX',
+            'lampiran_docx' => 'Lampiran',
+            'lampiran_docx.*' => 'Lampiran',
+            'remove_lampiran' => 'Hapus Lampiran',
+            'remove_lampiran.*' => 'Hapus Lampiran',
             'ditetapkan_di' => 'Ditetapkan di',
             'jabatan_penandatangan' => 'Jabatan Penandatangan',
             'nama_penandatangan' => 'Nama Penandatangan',
@@ -197,6 +186,27 @@ class SkController extends Controller
     private function storeLampiran(Request $request, mixed $existing): array
     {
         $attachments = $this->sanitizeLampiran($existing);
+        $removePaths = $this->filterRemoveLampiranPaths($request->input('remove_lampiran', []));
+        if (!empty($removePaths)) {
+            $removeLookup = array_flip($removePaths);
+            $remaining = [];
+
+            foreach ($attachments as $attachment) {
+                $path = (string) ($attachment['path'] ?? '');
+                if ($path !== '' && isset($removeLookup[$path])) {
+                    $fullPath = storage_path('app/' . $path);
+                    if (file_exists($fullPath)) {
+                        @unlink($fullPath);
+                    }
+                    continue;
+                }
+
+                $remaining[] = $attachment;
+            }
+
+            $attachments = $remaining;
+        }
+
         $uploadedFiles = $request->file('lampiran_docx', []);
 
         foreach ($uploadedFiles as $file) {
@@ -206,10 +216,15 @@ class SkController extends Controller
 
             $originalName = trim((string) $file->getClientOriginalName());
             if ($originalName === '') {
-                $originalName = 'lampiran.docx';
+                $originalName = 'lampiran';
             }
 
-            $storageName = Str::uuid()->toString() . '.docx';
+            $extension = strtolower((string) ($file->getClientOriginalExtension() ?: $file->extension()));
+            if ($extension === '') {
+                $extension = 'bin';
+            }
+
+            $storageName = Str::uuid()->toString() . '.' . $extension;
             $storedPath = $file->storeAs('sk-lampiran', $storageName);
 
             if (!$storedPath) {
@@ -223,6 +238,29 @@ class SkController extends Controller
         }
 
         return $attachments;
+    }
+
+    private function filterRemoveLampiranPaths(mixed $value): array
+    {
+        if (!is_array($value)) {
+            return [];
+        }
+
+        $paths = [];
+        foreach ($value as $path) {
+            if (!is_string($path)) {
+                continue;
+            }
+
+            $normalized = trim($path);
+            if ($normalized === '') {
+                continue;
+            }
+
+            $paths[] = $normalized;
+        }
+
+        return array_values(array_unique($paths));
     }
 
     private function sanitizeLampiran(mixed $attachments): array
@@ -270,12 +308,4 @@ class SkController extends Controller
         }
     }
 
-    private function downloadPdf(array $data): Response
-    {
-        $pdf = Pdf::loadView('pages.sk-preview-pdf', $data);
-
-        $filename = 'surat_keputusan_' . now()->format('Ymd_His') . '.pdf';
-
-        return $pdf->download($filename);
-    }
 }

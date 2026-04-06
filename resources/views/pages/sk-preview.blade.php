@@ -10,7 +10,7 @@
             <div class="mx-auto max-w-6xl">
                 <div class="mb-8 text-center">
                     <h1 class="mb-2 text-3xl font-bold text-slate-900 dark:text-slate-100">Preview Surat Keputusan</h1>
-                    <p class="text-base text-slate-600 dark:text-slate-300">Preview ini langsung dari PDF hasil konversi template DOCX agar tampilannya sama persis.</p>
+                    <p class="text-base text-slate-600 dark:text-slate-300">Preview ini langsung dari PDF hasil konversi template DOCX, termasuk lampiran yang disusun setelah halaman terakhir.</p>
                 </div>
 
                 <div class="mb-8 rounded-2xl border border-slate-200 bg-white/90 p-1 shadow-lg backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/70">
@@ -34,7 +34,7 @@
                             </a>
                             <a href="{{ route('sk.docx') }}" class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-300 bg-emerald-50/80 px-4 py-2.5 text-sm font-semibold text-emerald-800 shadow-sm transition hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-200 dark:hover:bg-emerald-900/60 sm:w-auto">
                                 <x-heroicon-o-arrow-down-tray class="h-4 w-4" />
-                                {{ empty($lampiranItems) ? 'Download DOCX' : 'Download Paket DOCX' }}
+                                Download DOCX
                             </a>
                         </div>
                     </div>
@@ -42,7 +42,7 @@
 
                 @if (!empty($lampiranItems))
                     <div class="mb-6 rounded-xl border border-sky-200 bg-sky-50/80 px-4 py-3 text-sm text-sky-900 dark:border-sky-900/60 dark:bg-sky-950/40 dark:text-sky-100">
-                        <p class="font-semibold">Lampiran DOCX akan ikut dalam paket unduhan:</p>
+                        <p class="font-semibold">Lampiran akan disisipkan setelah halaman terakhir dokumen:</p>
                         <ul class="mt-1 list-disc pl-5">
                             @foreach ($lampiranItems as $item)
                                 <li>{{ $item['name'] }}</li>
