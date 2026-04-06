@@ -19,6 +19,7 @@ RUN apk add --no-cache \
     bash \
     git \
     unzip \
+    qpdf \
     libreoffice \
     libreoffice-writer \
     fontconfig \

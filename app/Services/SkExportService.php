@@ -35,12 +35,47 @@ class SkExportService
 
     public function createFinalPdfFromData(array $data): string
     {
-        $docxPath = $this->createFinalDocxFromData($data);
+        $lampiranFiles = $this->resolveLampiranFiles($data['lampiran'] ?? []);
+
+        if (DIRECTORY_SEPARATOR === '\\') {
+            $docxPath = $this->createFinalDocxFromData($data);
+
+            try {
+                return $this->convertDocxToPdf($docxPath);
+            } finally {
+                @unlink($docxPath);
+            }
+        }
+
+        $mainDocxPath = $this->documentService->createDocxFromData($data);
+        $tempPdfs = [];
+        $sofficeBinary = $this->resolveSofficeBinary();
 
         try {
-            return $this->convertDocxToPdf($docxPath);
+            $mainPdfPath = $this->convertDocxToPdf($mainDocxPath);
+            $tempPdfs[] = $mainPdfPath;
+
+            if (empty($lampiranFiles)) {
+                return $mainPdfPath;
+            }
+
+            if ($sofficeBinary === null) {
+                abort(500, 'Lampiran membutuhkan LibreOffice (soffice) di server Linux.');
+            }
+
+            foreach ($lampiranFiles as $lampiran) {
+                $lampiranPdfPath = $this->convertLampiranToPdf($lampiran['full_path'], $sofficeBinary);
+                $tempPdfs[] = $lampiranPdfPath;
+            }
+
+            return $this->mergePdfFiles($tempPdfs);
         } finally {
-            @unlink($docxPath);
+            @unlink($mainDocxPath);
+            foreach ($tempPdfs as $tempPdfPath) {
+                if (is_string($tempPdfPath) && file_exists($tempPdfPath)) {
+                    @unlink($tempPdfPath);
+                }
+            }
         }
     }
 
@@ -157,6 +192,57 @@ PS;
         }
 
         return $pdfPath;
+    }
+
+    private function convertLampiranToPdf(string $inputPath, string $sofficeBinary): string
+    {
+        $extension = strtolower((string) pathinfo($inputPath, PATHINFO_EXTENSION));
+
+        if ($extension === 'pdf') {
+            $copyPath = $this->makeTempPath('pdf');
+            if (!@copy($inputPath, $copyPath)) {
+                abort(500, 'Gagal menyalin lampiran PDF untuk proses penggabungan.');
+            }
+
+            return $copyPath;
+        }
+
+        return $this->convertWithSoffice($inputPath, $sofficeBinary);
+    }
+
+    private function mergePdfFiles(array $pdfPaths): string
+    {
+        if (count($pdfPaths) === 1) {
+            $singlePath = (string) $pdfPaths[0];
+            $finalPath = $this->makeTempPath('pdf');
+            if (!@copy($singlePath, $finalPath)) {
+                abort(500, 'Gagal menyiapkan file PDF akhir.');
+            }
+            return $finalPath;
+        }
+
+        $outputPath = $this->makeTempPath('pdf');
+        $args = ['qpdf', '--empty', '--pages'];
+        foreach ($pdfPaths as $pdfPath) {
+            $args[] = (string) $pdfPath;
+            $args[] = '1-z';
+        }
+        $args[] = '--';
+        $args[] = $outputPath;
+
+        $process = new Process($args);
+        $process->setTimeout(180);
+        $process->run();
+
+        if (!$process->isSuccessful() || !file_exists($outputPath)) {
+            abort(
+                500,
+                'Gagal menggabungkan PDF utama dan lampiran. Pastikan qpdf terpasang. Output: ' .
+                trim($process->getErrorOutput() . ' ' . $process->getOutput())
+            );
+        }
+
+        return $outputPath;
     }
 
     private function appendLampiranWithWordCom(string $mainDocxPath, array $lampiranFiles): string
