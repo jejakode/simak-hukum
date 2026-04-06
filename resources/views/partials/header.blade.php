@@ -11,7 +11,7 @@
 				alt="SIMAK Logo"
 			>
 			<div class="flex min-w-0 flex-col">
-				<span class="text-heading truncate whitespace-nowrap text-base font-bold sm:text-lg"><span class="text-indigo-600 dark:text-indigo-400">SIMAK</span> HUKUM</span>
+				<span class="text-heading truncate whitespace-nowrap text-base font-bold sm:text-lg"><span class="text-indigo-600 dark:text-indigo-400">SIMAK</span>HUKUM</span>
 				<span class="truncate text-xs dark:text-gray-300 sm:text-sm">Bagian Hukum Kabupaten Buol</span>
 			</div>
 		</a>
