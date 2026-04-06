@@ -4,7 +4,9 @@ set -e
 cd /var/www/html
 
 mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views bootstrap/cache
+mkdir -p storage/logs
 mkdir -p database
+touch storage/logs/laravel.log
 chown -R www-data:www-data storage bootstrap/cache database
 
 if [ ! -f .env ] && [ -f .env.example ]; then

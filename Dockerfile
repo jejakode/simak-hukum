@@ -19,6 +19,11 @@ RUN apk add --no-cache \
     bash \
     git \
     unzip \
+    libreoffice \
+    libreoffice-writer \
+    fontconfig \
+    ttf-dejavu \
+    ttf-liberation \
     icu-dev \
     oniguruma-dev \
     libzip-dev \
@@ -53,16 +58,19 @@ COPY --from=node-builder /app/public/build ./public/build
 
 COPY docker/nginx/default.conf /etc/nginx/http.d/default.conf
 COPY docker/supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY docker/php/uploads.ini /usr/local/etc/php/conf.d/uploads.ini
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 
 RUN chmod +x /usr/local/bin/entrypoint.sh && \
     rm -rf /var/cache/apk/* /tmp/* && \
-    mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views bootstrap/cache && \
+    mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache && \
+    touch storage/logs/laravel.log && \
     chown -R www-data:www-data /var/www/html /run /var/lib/nginx /var/log/nginx
 
 ENV APP_ENV=production
 ENV APP_DEBUG=false
 ENV LOG_CHANNEL=stderr
+ENV SK_OFFICE_BINARY=/usr/bin/soffice
 
 EXPOSE 80
 
