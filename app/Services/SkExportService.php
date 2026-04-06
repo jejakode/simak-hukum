@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\Process\Process;
 
 class SkExportService
@@ -16,6 +17,13 @@ class SkExportService
         $lampiranFiles = $this->resolveLampiranFiles($data['lampiran'] ?? []);
 
         if (empty($lampiranFiles)) {
+            return $mainDocxPath;
+        }
+
+        if (DIRECTORY_SEPARATOR !== '\\') {
+            Log::warning('Lampiran DOCX inline dilewati di Linux karena membutuhkan Word COM.', [
+                'lampiran_count' => count($lampiranFiles),
+            ]);
             return $mainDocxPath;
         }
 
