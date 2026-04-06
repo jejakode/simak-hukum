@@ -64,7 +64,7 @@ class SkExportService
             $outDir,
             $docxPath,
         ]);
-        $process->setTimeout(120);
+        $process->setTimeout(600);
         $process->run();
 
         if (!$process->isSuccessful()) {
@@ -374,4 +374,3 @@ PS;
         @rmdir($directory);
     }
 }
-

@@ -22,6 +22,9 @@ RUN apk add --no-cache \
     libreoffice \
     libreoffice-writer \
     fontconfig \
+    font-noto \
+    font-noto-cjk \
+    ttf-freefont \
     ttf-dejavu \
     ttf-liberation \
     icu-dev \
@@ -62,6 +65,7 @@ COPY docker/php/uploads.ini /usr/local/etc/php/conf.d/uploads.ini
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 
 RUN chmod +x /usr/local/bin/entrypoint.sh && \
+    fc-cache -f && \
     rm -rf /var/cache/apk/* /tmp/* && \
     mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache && \
     touch storage/logs/laravel.log && \
