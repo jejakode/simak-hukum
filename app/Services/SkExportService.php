@@ -111,6 +111,7 @@ class SkExportService
         }
 
         $docxPath = $this->createFinalDocxFromData($data);
+        $this->stabilizeDocxTableLayoutForLinux($docxPath);
         $tempPdfs = [];
         $finalPdfPath = null;
 
@@ -566,6 +567,62 @@ PS;
         return array_values(array_filter($value, static function ($item) {
             return is_string($item) && trim($item) !== '';
         }));
+    }
+
+    private function stabilizeDocxTableLayoutForLinux(string $docxPath): void
+    {
+        if (DIRECTORY_SEPARATOR === '\\' || !is_file($docxPath)) {
+            return;
+        }
+
+        if (!class_exists(\ZipArchive::class)) {
+            Log::warning('Ekstensi ZipArchive tidak tersedia. Lewati stabilisasi tabel DOCX untuk Linux.');
+            return;
+        }
+
+        $zip = new \ZipArchive();
+        if ($zip->open($docxPath) !== true) {
+            Log::warning('Gagal membuka DOCX untuk stabilisasi layout tabel Linux.', ['docx' => $docxPath]);
+            return;
+        }
+
+        try {
+            $documentXml = $zip->getFromName('word/document.xml');
+            if (!is_string($documentXml) || $documentXml === '') {
+                return;
+            }
+
+            $updatedXml = preg_replace(
+                '/<w:tblPr>(.*?)<\/w:tblPr>/s',
+                static function (array $matches): string {
+                    $tblPr = $matches[0];
+                    if (str_contains($tblPr, '<w:tblLayout')) {
+                        $tblPr = preg_replace(
+                            '/<w:tblLayout[^>]*\/>/',
+                            '<w:tblLayout w:type="fixed"/>',
+                            $tblPr
+                        );
+
+                        return is_string($tblPr) ? $tblPr : $matches[0];
+                    }
+
+                    return str_replace(
+                        '</w:tblPr>',
+                        '<w:tblLayout w:type="fixed"/></w:tblPr>',
+                        $tblPr
+                    );
+                },
+                $documentXml
+            );
+
+            if (!is_string($updatedXml) || $updatedXml === $documentXml) {
+                return;
+            }
+
+            $zip->addFromString('word/document.xml', $updatedXml);
+        } finally {
+            $zip->close();
+        }
     }
 
     private function buildPreviewHash(array $data): string
