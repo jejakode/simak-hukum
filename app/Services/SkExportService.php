@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\Process\Process;
 
@@ -103,54 +102,40 @@ class SkExportService
             }
         }
 
+        $docxPath = $this->createFinalDocxFromData($data);
         $tempPdfs = [];
-        $sofficeBinary = $this->resolveSofficeBinary();
+        $finalPdfPath = null;
 
         try {
-            $mainPdfPath = $this->createMainPdfWithDompdf($data);
+            $mainPdfPath = $this->convertDocxToPdf($docxPath);
             $tempPdfs[] = $mainPdfPath;
 
             if (empty($lampiranFiles)) {
+                $finalPdfPath = $mainPdfPath;
                 return $mainPdfPath;
             }
 
+            $sofficeBinary = $this->resolveSofficeBinary();
             foreach ($lampiranFiles as $lampiran) {
                 $lampiranPdfPath = $this->convertLampiranToPdf($lampiran['full_path'], $sofficeBinary);
                 $tempPdfs[] = $lampiranPdfPath;
             }
 
-            return $this->mergePdfFiles($tempPdfs);
+            $finalPdfPath = $this->mergePdfFiles($tempPdfs);
+            return $finalPdfPath;
         } finally {
+            @unlink($docxPath);
+
             foreach ($tempPdfs as $tempPdfPath) {
+                if ($finalPdfPath !== null && $tempPdfPath === $finalPdfPath) {
+                    continue;
+                }
+
                 if (is_string($tempPdfPath) && file_exists($tempPdfPath)) {
                     @unlink($tempPdfPath);
                 }
             }
         }
-    }
-
-    private function createMainPdfWithDompdf(array $data): string
-    {
-        $pdfPath = $this->makeTempPath('pdf');
-        $pdf = Pdf::loadView('pdf.sk-main', [
-            'nomor_surat' => trim((string) ($data['nomor_surat'] ?? '')),
-            'sk_title' => trim((string) ($data['sk_title'] ?? '')),
-            'menimbang' => $this->filterTextArray($data['menimbang'] ?? []),
-            'mengingat' => $this->filterTextArray($data['mengingat'] ?? []),
-            'menetapkan' => trim((string) ($data['menetapkan'] ?? '')),
-            'diktum' => $this->filterTextArray($data['diktum'] ?? []),
-            'ditetapkan_di' => trim((string) ($data['ditetapkan_di'] ?? '')),
-            'jabatan_penandatangan' => trim((string) ($data['jabatan_penandatangan'] ?? '')),
-            'nama_penandatangan' => trim((string) ($data['nama_penandatangan'] ?? '')),
-        ])->setPaper('a4', 'portrait');
-
-        file_put_contents($pdfPath, $pdf->output());
-
-        if (!file_exists($pdfPath) || filesize($pdfPath) === 0) {
-            abort(500, 'Gagal menghasilkan PDF utama.');
-        }
-
-        return $pdfPath;
     }
 
     private function convertDocxToPdf(string $docxPath): string
@@ -589,6 +574,7 @@ PS;
         }
 
         $payload = [
+            'pdf_engine' => 'docx_soffice_v1',
             'nomor_surat' => trim((string) ($data['nomor_surat'] ?? '')),
             'sk_title' => trim((string) ($data['sk_title'] ?? '')),
             'menimbang' => $this->filterTextArray($data['menimbang'] ?? []),

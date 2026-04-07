@@ -78,9 +78,7 @@
     <p class="center title">PROVINSI SULAWESI TENGAH</p>
 
     <p class="center title title-space">KEPUTUSAN BUPATI</p>
-    @if ($nomor_surat !== '')
-        <p class="center title">NOMOR : {{ $nomor_surat }}</p>
-    @endif
+    <p class="center title">NOMOR : {{ $nomor_surat !== '' ? $nomor_surat : ' ' }}</p>
     <p class="center title">TENTANG</p>
     <p class="center title">{{ $sk_title !== '' ? $sk_title : '[JUDUL SURAT KEPUTUSAN]' }}</p>
 
