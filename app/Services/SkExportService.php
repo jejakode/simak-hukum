@@ -8,8 +8,63 @@ use Symfony\Component\Process\Process;
 
 class SkExportService
 {
+    private const PREVIEW_CACHE_DIR = 'app/sk-preview-cache';
+
     public function __construct(private readonly SkDocumentService $documentService)
     {
+    }
+
+    public function getOrCreatePreviewPdf(array $data, ?array $currentPreview = null): array
+    {
+        $hash = $this->buildPreviewHash($data);
+        $cachedPath = $this->previewCachePath($hash);
+
+        if (is_array($currentPreview)) {
+            $currentHash = (string) ($currentPreview['hash'] ?? '');
+            $currentPath = (string) ($currentPreview['path'] ?? '');
+
+            if ($currentHash === $hash && $currentPath !== '' && file_exists($currentPath)) {
+                return [
+                    'hash' => $hash,
+                    'path' => $currentPath,
+                ];
+            }
+        }
+
+        if (file_exists($cachedPath)) {
+            $this->cleanupPreviousPreviewPath($currentPreview, $cachedPath);
+            $this->maybePrunePreviewCache();
+
+            return [
+                'hash' => $hash,
+                'path' => $cachedPath,
+            ];
+        }
+
+        $tempPath = $this->createFinalPdfFromData($data);
+
+        try {
+            $this->ensurePreviewCacheDirectory();
+
+            if (!@rename($tempPath, $cachedPath)) {
+                if (!@copy($tempPath, $cachedPath)) {
+                    abort(500, 'Gagal menyimpan cache preview PDF.');
+                }
+                @unlink($tempPath);
+            }
+        } finally {
+            if (file_exists($tempPath)) {
+                @unlink($tempPath);
+            }
+        }
+
+        $this->cleanupPreviousPreviewPath($currentPreview, $cachedPath);
+        $this->maybePrunePreviewCache();
+
+        return [
+            'hash' => $hash,
+            'path' => $cachedPath,
+        ];
     }
 
     public function createFinalDocxFromData(array $data): string
@@ -518,5 +573,110 @@ PS;
         return array_values(array_filter($value, static function ($item) {
             return is_string($item) && trim($item) !== '';
         }));
+    }
+
+    private function buildPreviewHash(array $data): string
+    {
+        $lampiranSignatures = [];
+        foreach ($this->resolveLampiranFiles($data['lampiran'] ?? []) as $lampiran) {
+            $path = (string) ($lampiran['full_path'] ?? '');
+            $lampiranSignatures[] = [
+                'name' => (string) ($lampiran['name'] ?? ''),
+                'path' => $path,
+                'size' => is_file($path) ? filesize($path) : null,
+                'mtime' => is_file($path) ? filemtime($path) : null,
+            ];
+        }
+
+        $payload = [
+            'nomor_surat' => trim((string) ($data['nomor_surat'] ?? '')),
+            'sk_title' => trim((string) ($data['sk_title'] ?? '')),
+            'menimbang' => $this->filterTextArray($data['menimbang'] ?? []),
+            'mengingat' => $this->filterTextArray($data['mengingat'] ?? []),
+            'memperhatikan' => $this->filterTextArray($data['memperhatikan'] ?? []),
+            'menetapkan' => trim((string) ($data['menetapkan'] ?? '')),
+            'diktum' => $this->filterTextArray($data['diktum'] ?? []),
+            'ditetapkan_di' => trim((string) ($data['ditetapkan_di'] ?? '')),
+            'jabatan_penandatangan' => trim((string) ($data['jabatan_penandatangan'] ?? '')),
+            'nama_penandatangan' => trim((string) ($data['nama_penandatangan'] ?? '')),
+            'lampiran' => $lampiranSignatures,
+        ];
+
+        return hash('sha256', (string) json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+    }
+
+    private function previewCachePath(string $hash): string
+    {
+        return storage_path(self::PREVIEW_CACHE_DIR . '/' . $hash . '.pdf');
+    }
+
+    private function previewCacheDirectoryPath(): string
+    {
+        return storage_path(self::PREVIEW_CACHE_DIR);
+    }
+
+    private function ensurePreviewCacheDirectory(): void
+    {
+        $directory = $this->previewCacheDirectoryPath();
+        if (!is_dir($directory) && !@mkdir($directory, 0775, true) && !is_dir($directory)) {
+            abort(500, 'Gagal menyiapkan direktori cache preview PDF.');
+        }
+    }
+
+    private function cleanupPreviousPreviewPath(?array $currentPreview, string $activePath): void
+    {
+        if (!is_array($currentPreview)) {
+            return;
+        }
+
+        $oldPath = (string) ($currentPreview['path'] ?? '');
+        if ($oldPath === '' || $oldPath === $activePath || !file_exists($oldPath)) {
+            return;
+        }
+
+        if ($this->isPreviewCachePath($oldPath)) {
+            @unlink($oldPath);
+        }
+    }
+
+    private function isPreviewCachePath(string $path): bool
+    {
+        $realPath = realpath($path);
+        $realCacheDirectory = realpath($this->previewCacheDirectoryPath());
+
+        if ($realPath === false || $realCacheDirectory === false) {
+            return false;
+        }
+
+        return str_starts_with($realPath, $realCacheDirectory . DIRECTORY_SEPARATOR);
+    }
+
+    private function maybePrunePreviewCache(): void
+    {
+        if (random_int(1, 20) !== 1) {
+            return;
+        }
+
+        $directory = $this->previewCacheDirectoryPath();
+        if (!is_dir($directory)) {
+            return;
+        }
+
+        $files = glob($directory . DIRECTORY_SEPARATOR . '*.pdf');
+        if (!is_array($files)) {
+            return;
+        }
+
+        $cutoff = time() - (2 * 24 * 60 * 60);
+        foreach ($files as $file) {
+            if (!is_string($file)) {
+                continue;
+            }
+
+            $mtime = @filemtime($file);
+            if ($mtime !== false && $mtime < $cutoff && $this->isPreviewCachePath($file)) {
+                @unlink($file);
+            }
+        }
     }
 }

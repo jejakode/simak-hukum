@@ -5,7 +5,7 @@
         $lampiranItems = array_values(array_filter($lampiran ?? [], fn($item) => is_array($item) && is_string($item['name'] ?? null) && trim($item['name']) !== ''));
     @endphp
 
-    <div class="bg-gradient-to-b from-slate-100 via-slate-100 to-slate-200 pb-12 pt-24 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+    <div class="bg-gradient-to-b from-slate-100 via-slate-100 to-slate-200 pb-12 pt-28 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8">
             <div class="mx-auto max-w-6xl">
                 <div class="mb-8 text-center">

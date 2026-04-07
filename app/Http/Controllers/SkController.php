@@ -43,7 +43,9 @@ class SkController extends Controller
     public function newDraft(): RedirectResponse
     {
         $this->deleteLampiranFiles(session()->get('sk_data.lampiran', []));
+        $this->deletePreviewCacheFile(session()->get('sk_preview_pdf'));
         session()->forget('sk_data');
+        session()->forget('sk_preview_pdf');
 
         return redirect()->route('sk.create', ['fresh' => 1]);
     }
@@ -305,6 +307,28 @@ class SkController extends Controller
             if (file_exists($path)) {
                 @unlink($path);
             }
+        }
+    }
+
+    private function deletePreviewCacheFile(mixed $preview): void
+    {
+        if (!is_array($preview)) {
+            return;
+        }
+
+        $path = trim((string) ($preview['path'] ?? ''));
+        if ($path === '' || !file_exists($path)) {
+            return;
+        }
+
+        $realPath = realpath($path);
+        $realCacheDirectory = realpath(storage_path('app/sk-preview-cache'));
+        if ($realPath === false || $realCacheDirectory === false) {
+            return;
+        }
+
+        if (str_starts_with($realPath, $realCacheDirectory . DIRECTORY_SEPARATOR)) {
+            @unlink($realPath);
         }
     }
 

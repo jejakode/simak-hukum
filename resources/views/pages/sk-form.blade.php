@@ -2,7 +2,7 @@
 
 @section('content')
     <div class="min-h-screen bg-slate-100 text-slate-900 transition-colors dark:bg-slate-950 dark:text-slate-100">
-        <main class="pt-24 py-10">
+        <main class="pt-28 py-10">
             <div class="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="mb-8 text-center">
                     {{-- <span class="mb-2 inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-semibold tracking-wide text-blue-700 dark:border-cyan-700/40 dark:bg-cyan-900/30 dark:text-cyan-200">DRAFT</span> --}}
