@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\Process\Process;
 
@@ -47,20 +48,15 @@ class SkExportService
             }
         }
 
-        $mainDocxPath = $this->documentService->createDocxFromData($data);
         $tempPdfs = [];
         $sofficeBinary = $this->resolveSofficeBinary();
 
         try {
-            $mainPdfPath = $this->convertDocxToPdf($mainDocxPath);
+            $mainPdfPath = $this->createMainPdfWithDompdf($data);
             $tempPdfs[] = $mainPdfPath;
 
             if (empty($lampiranFiles)) {
                 return $mainPdfPath;
-            }
-
-            if ($sofficeBinary === null) {
-                abort(500, 'Lampiran membutuhkan LibreOffice (soffice) di server Linux.');
             }
 
             foreach ($lampiranFiles as $lampiran) {
@@ -70,13 +66,36 @@ class SkExportService
 
             return $this->mergePdfFiles($tempPdfs);
         } finally {
-            @unlink($mainDocxPath);
             foreach ($tempPdfs as $tempPdfPath) {
                 if (is_string($tempPdfPath) && file_exists($tempPdfPath)) {
                     @unlink($tempPdfPath);
                 }
             }
         }
+    }
+
+    private function createMainPdfWithDompdf(array $data): string
+    {
+        $pdfPath = $this->makeTempPath('pdf');
+        $pdf = Pdf::loadView('pdf.sk-main', [
+            'nomor_surat' => trim((string) ($data['nomor_surat'] ?? '')),
+            'sk_title' => trim((string) ($data['sk_title'] ?? '')),
+            'menimbang' => $this->filterTextArray($data['menimbang'] ?? []),
+            'mengingat' => $this->filterTextArray($data['mengingat'] ?? []),
+            'menetapkan' => trim((string) ($data['menetapkan'] ?? '')),
+            'diktum' => $this->filterTextArray($data['diktum'] ?? []),
+            'ditetapkan_di' => trim((string) ($data['ditetapkan_di'] ?? '')),
+            'jabatan_penandatangan' => trim((string) ($data['jabatan_penandatangan'] ?? '')),
+            'nama_penandatangan' => trim((string) ($data['nama_penandatangan'] ?? '')),
+        ])->setPaper('a4', 'portrait');
+
+        file_put_contents($pdfPath, $pdf->output());
+
+        if (!file_exists($pdfPath) || filesize($pdfPath) === 0) {
+            abort(500, 'Gagal menghasilkan PDF utama.');
+        }
+
+        return $pdfPath;
     }
 
     private function convertDocxToPdf(string $docxPath): string
@@ -211,7 +230,7 @@ PS;
         return $pdfPath;
     }
 
-    private function convertLampiranToPdf(string $inputPath, string $sofficeBinary): string
+    private function convertLampiranToPdf(string $inputPath, ?string $sofficeBinary): string
     {
         $extension = strtolower((string) pathinfo($inputPath, PATHINFO_EXTENSION));
 
@@ -222,6 +241,10 @@ PS;
             }
 
             return $copyPath;
+        }
+
+        if ($sofficeBinary === null) {
+            abort(500, 'Lampiran DOCX/JPG/PNG membutuhkan LibreOffice (soffice) di server Linux.');
         }
 
         return $this->convertWithSoffice($inputPath, $sofficeBinary);
@@ -484,5 +507,16 @@ PS;
         }
 
         @rmdir($directory);
+    }
+
+    private function filterTextArray(mixed $value): array
+    {
+        if (!is_array($value)) {
+            return [];
+        }
+
+        return array_values(array_filter($value, static function ($item) {
+            return is_string($item) && trim($item) !== '';
+        }));
     }
 }
