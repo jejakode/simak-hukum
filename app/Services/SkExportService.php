@@ -81,6 +81,23 @@ class SkExportService
 
     private function convertDocxToPdf(string $docxPath): string
     {
+        if (DIRECTORY_SEPARATOR === '\\') {
+            try {
+                return $this->convertWithWordCom($docxPath);
+            } catch (\Throwable $exception) {
+                $sofficeBinary = $this->resolveSofficeBinary();
+                if ($sofficeBinary === null) {
+                    throw $exception;
+                }
+
+                Log::warning('Word COM gagal saat konversi PDF, fallback ke LibreOffice.', [
+                    'message' => $exception->getMessage(),
+                ]);
+
+                return $this->convertWithSoffice($docxPath, $sofficeBinary);
+            }
+        }
+
         $sofficeBinary = $this->resolveSofficeBinary();
         if ($sofficeBinary !== null) {
             return $this->convertWithSoffice($docxPath, $sofficeBinary);
@@ -275,8 +292,9 @@ $attachmentPaths = @(
 
 $word = $null
 $doc = $null
+$pdfDoc = $null
 try {
-    $wdStory = 6
+    $wdCollapseEnd = 0
     $wdPageBreak = 7
     $wdFormatXMLDocument = 16
 
@@ -284,43 +302,43 @@ try {
     $word.Visible = $false
     $word.DisplayAlerts = 0
     $doc = $word.Documents.Open($mainDocxPath, $false, $false)
-    $selection = $word.Selection
-    $selection.EndKey($wdStory) | Out-Null
 
     foreach ($attachmentPath in $attachmentPaths) {
         if ([string]::IsNullOrWhiteSpace($attachmentPath) -or -not (Test-Path -LiteralPath $attachmentPath)) {
             continue
         }
 
-        $selection.InsertBreak($wdPageBreak)
-        $selection.EndKey($wdStory) | Out-Null
+        $insertRange = $doc.Range($doc.Content.End - 1, $doc.Content.End - 1)
+        $insertRange.Collapse($wdCollapseEnd)
+        $insertRange.InsertBreak($wdPageBreak)
+        $insertRange = $doc.Range($doc.Content.End - 1, $doc.Content.End - 1)
+        $insertRange.Collapse($wdCollapseEnd)
 
         $extension = [System.IO.Path]::GetExtension($attachmentPath).ToLowerInvariant()
         if ($extension -eq '.docx') {
-            $selection.InsertFile($attachmentPath)
+            $insertRange.InsertFile($attachmentPath)
         } elseif ($extension -eq '.pdf') {
             $pdfDoc = $word.Documents.Open($attachmentPath, $false, $true)
-            $pdfDoc.Content.Copy()
-            $selection.Paste()
+            $insertRange.FormattedText = $pdfDoc.Content.FormattedText
             $pdfDoc.Close()
+            $pdfDoc = $null
         } elseif ($extension -in @('.jpg', '.jpeg', '.png')) {
-            $shape = $selection.InlineShapes.AddPicture($attachmentPath, $false, $true)
+            $shape = $insertRange.InlineShapes.AddPicture($attachmentPath, $false, $true)
             $maxWidth = 430
             if ($shape.Width -gt $maxWidth) {
                 $ratio = $maxWidth / $shape.Width
                 $shape.Width = $maxWidth
                 $shape.Height = [int]($shape.Height * $ratio)
             }
-            $selection.TypeParagraph()
+            $insertRange.InsertParagraphAfter()
         }
-
-        $selection.EndKey($wdStory) | Out-Null
     }
 
     $doc.SaveAs([ref]$outputDocxPath, [ref]$wdFormatXMLDocument)
     $doc.Close()
     $word.Quit()
 } catch {
+    if ($pdfDoc -ne $null) { $pdfDoc.Close() }
     if ($doc -ne $null) { $doc.Close() }
     if ($word -ne $null) { $word.Quit() }
     throw
