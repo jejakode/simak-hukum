@@ -13,12 +13,16 @@ class SkExportService
     {
     }
 
-    public function getOrCreatePreviewPdf(array $data, ?array $currentPreview = null): array
+    public function getOrCreatePreviewPdf(
+        array $data,
+        ?array $currentPreview = null,
+        bool $forceRebuild = false
+    ): array
     {
         $hash = $this->buildPreviewHash($data);
         $cachedPath = $this->previewCachePath($hash);
 
-        if (is_array($currentPreview)) {
+        if (!$forceRebuild && is_array($currentPreview)) {
             $currentHash = (string) ($currentPreview['hash'] ?? '');
             $currentPath = (string) ($currentPreview['path'] ?? '');
 
@@ -30,7 +34,7 @@ class SkExportService
             }
         }
 
-        if (file_exists($cachedPath)) {
+        if (!$forceRebuild && file_exists($cachedPath)) {
             $this->cleanupPreviousPreviewPath($currentPreview, $cachedPath);
             $this->maybePrunePreviewCache();
 
@@ -38,6 +42,10 @@ class SkExportService
                 'hash' => $hash,
                 'path' => $cachedPath,
             ];
+        }
+
+        if ($forceRebuild && file_exists($cachedPath)) {
+            @unlink($cachedPath);
         }
 
         $tempPath = $this->createFinalPdfFromData($data);

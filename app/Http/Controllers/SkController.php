@@ -65,6 +65,7 @@ class SkController extends Controller
         $data['requested_output'] = $action;
 
         session()->put('sk_data', $data);
+        session()->put('sk_preview_force_refresh', true);
 
         return redirect()->route('sk.preview');
     }
