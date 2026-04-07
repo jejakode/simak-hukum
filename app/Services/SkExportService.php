@@ -592,7 +592,7 @@ PS;
                 return;
             }
 
-            $updatedXml = preg_replace(
+            $updatedXml = preg_replace_callback(
                 '/<w:tblPr>(.*?)<\/w:tblPr>/s',
                 static function (array $matches): string {
                     $tblPr = $matches[0];
