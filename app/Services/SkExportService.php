@@ -8,6 +8,7 @@ use Symfony\Component\Process\Process;
 class SkExportService
 {
     private const PREVIEW_CACHE_DIR = 'app/sk-preview-cache';
+    private const WORK_TEMP_DIR = 'app/sk-temp';
 
     public function __construct(private readonly SkDocumentService $documentService)
     {
@@ -176,7 +177,7 @@ class SkExportService
 
     private function convertWithSoffice(string $docxPath, string $binary): string
     {
-        $outDir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'sk_pdf_' . uniqid();
+        $outDir = $this->workTempDirectory() . DIRECTORY_SEPARATOR . 'sk_pdf_' . uniqid();
         if (!@mkdir($outDir) && !is_dir($outDir)) {
             abort(500, 'Failed to create temporary pdf directory.');
         }
@@ -533,7 +534,7 @@ PS;
 
     private function makeTempPath(string $extension): string
     {
-        $base = tempnam(sys_get_temp_dir(), 'sk_' . $extension . '_');
+        $base = tempnam($this->workTempDirectory(), 'sk_' . $extension . '_');
         if ($base === false) {
             abort(500, 'Gagal menyiapkan file sementara.');
         }
@@ -541,6 +542,16 @@ PS;
         @unlink($base);
 
         return $base . '.' . $extension;
+    }
+
+    private function workTempDirectory(): string
+    {
+        $directory = storage_path(self::WORK_TEMP_DIR);
+        if (!is_dir($directory) && !@mkdir($directory, 0775, true) && !is_dir($directory)) {
+            abort(500, 'Gagal menyiapkan direktori temp dokumen.');
+        }
+
+        return $directory;
     }
 
     private function escapePowerShellSingleQuoted(string $value): string

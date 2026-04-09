@@ -68,7 +68,12 @@ class SkDocumentService
 
     private function makeTempDocxPath(): string
     {
-        $base = tempnam(sys_get_temp_dir(), 'sk_docx_');
+        $tempDirectory = storage_path('app/sk-temp');
+        if (!is_dir($tempDirectory) && !@mkdir($tempDirectory, 0775, true) && !is_dir($tempDirectory)) {
+            abort(500, 'Failed to prepare temporary docx directory.');
+        }
+
+        $base = tempnam($tempDirectory, 'sk_docx_');
         if ($base === false) {
             abort(500, 'Failed to create temporary docx file.');
         }
