@@ -373,7 +373,15 @@ try {
     $word = New-Object -ComObject Word.Application
     $word.Visible = $false
     $word.DisplayAlerts = 0
+
+    if (-not (Test-Path -LiteralPath $mainDocxPath)) {
+        throw "Dokumen utama tidak ditemukan: $mainDocxPath"
+    }
+
     $doc = $word.Documents.Open($mainDocxPath, $false, $false)
+    if ($doc -eq $null) {
+        throw "Word gagal membuka dokumen utama: $mainDocxPath"
+    }
 
     foreach ($attachmentPath in $attachmentPaths) {
         if ([string]::IsNullOrWhiteSpace($attachmentPath) -or -not (Test-Path -LiteralPath $attachmentPath)) {

@@ -59,14 +59,23 @@ class SkDocumentService
         $template->setValue('jabatan_penandatangan', $data['jabatan_penandatangan'] ?? '');
         $template->setValue('nama_penandatangan', $data['nama_penandatangan'] ?? '');
 
-        $outputPath = $targetPath ?? tempnam(sys_get_temp_dir(), 'sk_');
-        if ($outputPath === false) {
-            abort(500, 'Failed to create temporary docx file.');
-        }
+        $outputPath = $targetPath ?? $this->makeTempDocxPath();
 
         $template->saveAs($outputPath);
 
         return $outputPath;
+    }
+
+    private function makeTempDocxPath(): string
+    {
+        $base = tempnam(sys_get_temp_dir(), 'sk_docx_');
+        if ($base === false) {
+            abort(500, 'Failed to create temporary docx file.');
+        }
+
+        @unlink($base);
+
+        return $base . '.docx';
     }
 
     private function cloneLetterListRows(
@@ -160,4 +169,3 @@ class SkDocumentService
         }));
     }
 }
-

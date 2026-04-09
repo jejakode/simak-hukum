@@ -1,0 +1,363 @@
+openapi: 3.0.3
+info:
+  title: Document Worker API
+  version: 1.0.0
+  description: Internal API for asynchronous DOCX/PDF processing on Windows service.
+servers:
+  - url: https://document-worker.internal
+tags:
+  - name: Health
+  - name: Jobs
+security:
+  - bearerAuth: []
+paths:
+  /health/live:
+    get:
+      tags: [Health]
+      summary: Liveness probe
+      security: []
+      responses:
+        "200":
+          description: Service is alive
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: alive
+  /health/ready:
+    get:
+      tags: [Health]
+      summary: Readiness probe
+      security: []
+      responses:
+        "200":
+          description: Service is ready
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ready
+        "503":
+          description: Dependencies are not ready
+  /v1/jobs:
+    post:
+      tags: [Jobs]
+      summary: Create a document processing job
+      operationId: createJob
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+            minLength: 8
+            maxLength: 128
+        - name: X-Correlation-Id
+          in: header
+          required: false
+          schema:
+            type: string
+            minLength: 8
+            maxLength: 128
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateJobRequest"
+      responses:
+        "202":
+          description: Job accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateJobResponse"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Idempotency conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /v1/jobs/{jobId}:
+    get:
+      tags: [Jobs]
+      summary: Get job status
+      operationId: getJob
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 8
+      responses:
+        "200":
+          description: Job status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobDetailResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Job not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /v1/jobs/{jobId}/result:
+    get:
+      tags: [Jobs]
+      summary: Get job result metadata
+      operationId: getJobResult
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 8
+      responses:
+        "200":
+          description: Job result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobResultResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Job not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Job is not completed yet
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    CreateJobRequest:
+      type: object
+      required:
+        - job_type
+        - input
+        - output
+      properties:
+        job_type:
+          type: string
+          enum: [docx_to_pdf, template_fill]
+        priority:
+          type: string
+          enum: [low, normal, high]
+          default: normal
+        input:
+          $ref: "#/components/schemas/JobInput"
+        output:
+          $ref: "#/components/schemas/JobOutput"
+        callback:
+          $ref: "#/components/schemas/JobCallback"
+        metadata:
+          type: object
+          additionalProperties: true
+    JobInput:
+      type: object
+      required:
+        - template_url
+      properties:
+        template_url:
+          type: string
+          description: s3:// or https:// signed URL
+          example: s3://bucket/templates/template-1.docx
+        payload:
+          type: object
+          additionalProperties: true
+        attachments:
+          type: array
+          items:
+            type: string
+            example: s3://bucket/input/attachment-1.pdf
+    JobOutput:
+      type: object
+      required:
+        - format
+        - target_path
+      properties:
+        format:
+          type: string
+          enum: [docx, pdf]
+        target_path:
+          type: string
+          example: s3://bucket/output/2026/04/
+        file_name:
+          type: string
+          example: surat-keputusan-001.pdf
+    JobCallback:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+        auth_token:
+          type: string
+    CreateJobResponse:
+      type: object
+      required: [job_id, status, created_at]
+      properties:
+        job_id:
+          type: string
+          example: 01HSZ9WYX8QFX4QJ7MQET7WQ8J
+        status:
+          type: string
+          enum: [QUEUED]
+        created_at:
+          type: string
+          format: date-time
+    JobDetailResponse:
+      type: object
+      required:
+        - job_id
+        - status
+        - job_type
+        - created_at
+        - updated_at
+      properties:
+        job_id:
+          type: string
+        job_type:
+          type: string
+          enum: [docx_to_pdf, template_fill]
+        status:
+          type: string
+          enum: [QUEUED, PROCESSING, SUCCEEDED, FAILED, CANCELED]
+        progress:
+          type: integer
+          minimum: 0
+          maximum: 100
+        error:
+          $ref: "#/components/schemas/JobError"
+        result:
+          $ref: "#/components/schemas/JobResult"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        started_at:
+          type: string
+          format: date-time
+          nullable: true
+        finished_at:
+          type: string
+          format: date-time
+          nullable: true
+    JobResultResponse:
+      type: object
+      required: [job_id, status]
+      properties:
+        job_id:
+          type: string
+        status:
+          type: string
+          enum: [SUCCEEDED, FAILED]
+        result:
+          $ref: "#/components/schemas/JobResult"
+        error:
+          $ref: "#/components/schemas/JobError"
+    JobResult:
+      type: object
+      properties:
+        file_url:
+          type: string
+          description: Signed URL or object reference
+        file_path:
+          type: string
+          description: Object storage path
+          example: s3://bucket/output/2026/04/surat-keputusan-001.pdf
+        file_hash_sha256:
+          type: string
+        mime_type:
+          type: string
+          example: application/pdf
+        size_bytes:
+          type: integer
+          minimum: 1
+    JobError:
+      type: object
+      properties:
+        code:
+          type: string
+          enum:
+            - INVALID_TEMPLATE
+            - INVALID_PAYLOAD
+            - STORAGE_UNREACHABLE
+            - CONVERSION_FAILED
+            - TIMEOUT_EXCEEDED
+            - UNAUTHORIZED
+            - INTERNAL_ERROR
+        message:
+          type: string
+        retriable:
+          type: boolean
+          default: false
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            correlation_id:
+              type: string
