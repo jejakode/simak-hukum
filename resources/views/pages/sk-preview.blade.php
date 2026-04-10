@@ -46,10 +46,6 @@
                             <p class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800/60">
                                 Jika tidak terjadi perubahan, tekan <span class="font-semibold">Ctrl + Shift + R</span> atau klik tombol <span class="font-semibold">Refresh Preview</span>.
                             </p>
-                            <p class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800/60">
-                                Jika preview gagal, buka langsung:
-                                <a href="{{ route('sk.preview.pdf') }}" target="_blank" class="font-semibold text-blue-600 hover:underline dark:text-cyan-300">Preview PDF</a>
-                            </p>
                             @if (!empty($lampiranItems))
                                 <div class="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-sky-900 dark:border-sky-900/60 dark:bg-sky-950/40 dark:text-sky-100">
                                     <p class="font-semibold">Lampiran akan disisipkan setelah halaman terakhir dokumen:</p>
@@ -114,17 +110,23 @@
             }
 
             if (refreshPreviewButton) {
-                refreshPreviewButton.addEventListener('click', () => {
-                    const url = new URL(window.location.href);
-                    url.searchParams.set('_preview_refresh', String(Date.now()));
-                    window.location.replace(url.toString());
+                refreshPreviewButton.addEventListener('click', async () => {
+                    await renderPdfPreview(true);
                 });
             }
+
+            document.addEventListener('keydown', async event => {
+                const key = String(event.key || '').toLowerCase();
+                if ((event.ctrlKey || event.metaKey) && event.shiftKey && key === 'r') {
+                    event.preventDefault();
+                    await renderPdfPreview(true);
+                }
+            });
 
             renderPdfPreview();
         });
 
-        async function renderPdfPreview() {
+        async function renderPdfPreview(forceRefresh = false) {
             if (typeof window.pdfjsLib === 'undefined') {
                 setPreviewError('Library preview PDF tidak tersedia di browser ini.');
                 return;
@@ -139,8 +141,18 @@
             try {
                 window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-                const pdfUrl = @json(route('sk.preview.pdf'));
-                const pdf = await window.pdfjsLib.getDocument({ url: pdfUrl, withCredentials: true }).promise;
+                container.innerHTML = '';
+                loading.textContent = forceRefresh ? 'Merefresh preview dokumen...' : 'Menyiapkan preview dokumen...';
+                loading.classList.remove('hidden', 'text-red-600', 'dark:text-red-300');
+                loading.classList.add('text-slate-500', 'dark:text-slate-300');
+
+                const pdfUrl = new URL(@json(route('sk.preview.pdf')), window.location.origin);
+                pdfUrl.searchParams.set('_ts', String(Date.now()));
+                if (forceRefresh) {
+                    pdfUrl.searchParams.set('refresh', '1');
+                }
+
+                const pdf = await window.pdfjsLib.getDocument({ url: pdfUrl.toString(), withCredentials: true }).promise;
 
                 container.innerHTML = '';
                 for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
@@ -165,7 +177,7 @@
                     await page.render({ canvasContext: context, viewport }).promise;
                 }
 
-                loading.remove();
+                loading.classList.add('hidden');
             } catch (error) {
                 setPreviewError('Preview belum bisa ditampilkan. Silakan buka link Preview PDF.');
             }

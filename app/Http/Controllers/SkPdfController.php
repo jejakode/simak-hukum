@@ -21,7 +21,7 @@ class SkPdfController extends Controller
     public function preview(Request $request, SkExportService $exportService): BinaryFileResponse
     {
         $data = session()->get('sk_data', []);
-        $forceRebuild = (bool) session()->pull('sk_preview_force_refresh', false);
+        $forceRebuild = (bool) session()->pull('sk_preview_force_refresh', false) || $request->boolean('refresh');
         $preview = $exportService->getOrCreatePreviewPdf(
             $data,
             session()->get('sk_preview_pdf'),
@@ -31,7 +31,9 @@ class SkPdfController extends Controller
 
         return response()->file((string) $preview['path'], [
             'Content-Type' => 'application/pdf',
-            'Cache-Control' => 'private, max-age=300',
+            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
         ]);
     }
 }
