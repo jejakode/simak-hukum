@@ -179,7 +179,7 @@
 
                 loading.classList.add('hidden');
             } catch (error) {
-                setPreviewError('Preview belum bisa ditampilkan. Silakan buka link Preview PDF.');
+                setPreviewError('Preview belum bisa ditampilkan. Silakan klik Refresh Preview atau gunakan tombol Download');
             }
         }
 

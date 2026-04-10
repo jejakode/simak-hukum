@@ -71,6 +71,7 @@ class SkDocumentService
         $outputPath = $targetPath ?? $this->makeTempDocxPath();
 
         $template->saveAs($outputPath);
+        $this->normalizeKonsideransLayout($outputPath);
 
         return $outputPath;
     }
@@ -113,11 +114,12 @@ class SkDocumentService
         }
 
         foreach ($items as $index => $text) {
+            $normalizedText = $this->normalizeListItemText($text);
             $items[$index] = [
                 $headMacro => $index === 0 ? $headText : '',
                 $sepMacro => $index === 0 ? ':' : '',
                 $labelMacro => chr(97 + $index) . '.',
-                $textMacro => $text . ';',
+                $textMacro => $normalizedText . ';',
             ];
         }
 
@@ -145,11 +147,12 @@ class SkDocumentService
         }
 
         foreach ($items as $index => $text) {
+            $normalizedText = $this->normalizeListItemText($text);
             $items[$index] = [
                 $headMacro => $index === 0 ? $headText : '',
                 $sepMacro => $index === 0 ? ':' : '',
                 $labelMacro => ($index + 1) . '.',
-                $textMacro => $text . ';',
+                $textMacro => $normalizedText . ';',
             ];
         }
 
@@ -191,6 +194,88 @@ class SkDocumentService
         }
 
         return $normalized . '.';
+    }
+
+    private function normalizeListItemText(string $text): string
+    {
+        $text = str_replace(["\r\n", "\r", "\n", "\t"], ' ', $text);
+        $text = preg_replace('/\s+/u', ' ', $text);
+        return trim((string) $text);
+    }
+
+    private function normalizeKonsideransLayout(string $docxPath): void
+    {
+        if (!is_file($docxPath) || !class_exists(\ZipArchive::class)) {
+            return;
+        }
+
+        $zip = new \ZipArchive();
+        if ($zip->open($docxPath) !== true) {
+            return;
+        }
+
+        try {
+            $documentXml = $zip->getFromName('word/document.xml');
+            if (!is_string($documentXml) || $documentXml === '') {
+                return;
+            }
+
+            $updatedXml = preg_replace_callback(
+                '/<w:tbl\b[^>]*>.*?<\/w:tbl>/s',
+                static function (array $matches): string {
+                    $tableXml = $matches[0];
+                    $isKonsideransTable = str_contains($tableXml, '<w:t>Menimbang</w:t>')
+                        || str_contains($tableXml, '<w:t>Mengingat</w:t>')
+                        || str_contains($tableXml, '<w:t>Memperhatikan</w:t>');
+
+                    if (!$isKonsideransTable) {
+                        return $tableXml;
+                    }
+
+                    $gridXml = '<w:tblGrid>'
+                        . '<w:gridCol w:w="1699"/>'
+                        . '<w:gridCol w:w="426"/>'
+                        . '<w:gridCol w:w="442"/>'
+                        . '<w:gridCol w:w="6523"/>'
+                        . '</w:tblGrid>';
+
+                    $tableXml = (string) preg_replace('/<w:tblGrid>.*?<\/w:tblGrid>/s', $gridXml, $tableXml, 1);
+
+                    $widths = ['1699', '426', '442', '6523'];
+                    $tableXml = (string) preg_replace_callback(
+                        '/<w:tr\b[^>]*>.*?<\/w:tr>/s',
+                        static function (array $rowMatches) use ($widths): string {
+                            $rowXml = $rowMatches[0];
+                            $cellIndex = 0;
+
+                            $rowXml = (string) preg_replace_callback(
+                                '/<w:tcW\b[^>]*\/>/',
+                                static function () use (&$cellIndex, $widths): string {
+                                    $width = $widths[min($cellIndex, 3)];
+                                    $cellIndex++;
+                                    return '<w:tcW w:w="' . $width . '" w:type="dxa"/>';
+                                },
+                                $rowXml
+                            );
+
+                            return $rowXml;
+                        },
+                        $tableXml
+                    );
+
+                    return $tableXml;
+                },
+                $documentXml
+            );
+
+            if (!is_string($updatedXml) || $updatedXml === $documentXml) {
+                return;
+            }
+
+            $zip->addFromString('word/document.xml', $updatedXml);
+        } finally {
+            $zip->close();
+        }
     }
 
 }
