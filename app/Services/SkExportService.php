@@ -154,6 +154,11 @@ class SkExportService
             try {
                 return $this->convertWithWordCom($docxPath);
             } catch (\Throwable $exception) {
+                $allowFallback = (bool) env('SK_ALLOW_LIBREOFFICE_FALLBACK', false);
+                if (!$allowFallback) {
+                    throw $exception;
+                }
+
                 $sofficeBinary = $this->resolveSofficeBinary();
                 if ($sofficeBinary === null) {
                     throw $exception;
@@ -232,43 +237,45 @@ class SkExportService
         }
 
         $pdfPath = $this->makeTempPath('pdf');
-        $docxEscaped = $this->escapePowerShellSingleQuoted($docxPath);
-        $pdfEscaped = $this->escapePowerShellSingleQuoted($pdfPath);
+        $vbsPath = $this->makeTempPath('vbs');
+        $docxArg = str_replace('"', '""', $docxPath);
+        $pdfArg = str_replace('"', '""', $pdfPath);
+        $vbs = <<<VBS
+On Error Resume Next
+Dim word, doc
+Set word = CreateObject("Word.Application")
+If Err.Number <> 0 Then
+    WScript.Echo "ERR_CREATE_WORD:" & Err.Number & ":" & Err.Description
+    WScript.Quit 1
+End If
+word.Visible = False
+word.DisplayAlerts = 0
 
-        $script = <<<'PS'
-$ErrorActionPreference = 'Stop'
-$docxPath = '__DOCX__'
-$pdfPath = '__PDF__'
-$word = $null
-$doc = $null
-try {
-    $word = New-Object -ComObject Word.Application
-    $word.Visible = $false
-    $word.DisplayAlerts = 0
-    $doc = $word.Documents.Open($docxPath, $false, $true)
-    $doc.SaveAs([ref]$pdfPath, [ref]17)
-    $doc.Close()
-    $word.Quit()
-} catch {
-    if ($doc -ne $null) { $doc.Close() }
-    if ($word -ne $null) { $word.Quit() }
-    throw
-}
-PS;
+Set doc = word.Documents.Open("$docxArg", False, True)
+If Err.Number <> 0 Then
+    WScript.Echo "ERR_OPEN_DOC:" & Err.Number & ":" & Err.Description
+    word.Quit
+    WScript.Quit 2
+End If
 
-        $script = str_replace(['__DOCX__', '__PDF__'], [$docxEscaped, $pdfEscaped], $script);
+doc.SaveAs "$pdfArg", 17
+If Err.Number <> 0 Then
+    WScript.Echo "ERR_SAVE_PDF:" & Err.Number & ":" & Err.Description
+    doc.Close False
+    word.Quit
+    WScript.Quit 3
+End If
 
-        $process = new Process([
-            'powershell',
-            '-NoProfile',
-            '-NonInteractive',
-            '-ExecutionPolicy',
-            'Bypass',
-            '-Command',
-            $script,
-        ]);
+doc.Close False
+word.Quit
+WScript.Quit 0
+VBS;
+        @file_put_contents($vbsPath, $vbs);
+
+        $process = new Process(['cscript', '//nologo', $vbsPath]);
         $process->setTimeout(180);
         $process->run();
+        @unlink($vbsPath);
 
         if (!$process->isSuccessful() || !file_exists($pdfPath)) {
             abort(

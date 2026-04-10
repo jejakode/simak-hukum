@@ -15,4 +15,17 @@ class SkDocxController extends Controller
         $baseFilename = 'surat_keputusan_' . now()->format('Ymd_His');
         return response()->download($tempFile, $baseFilename . '.docx')->deleteFileAfterSend(true);
     }
+
+    public function preview(Request $request, SkExportService $exportService): BinaryFileResponse
+    {
+        $data = session()->get('sk_data', []);
+        $tempFile = $exportService->createFinalDocxFromData($data);
+        $filename = 'surat_keputusan_preview_' . now()->format('Ymd_His') . '.docx';
+
+        return response()->file($tempFile, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'Content-Disposition' => 'inline; filename="' . $filename . '"',
+            'Cache-Control' => 'private, max-age=60',
+        ])->deleteFileAfterSend(true);
+    }
 }

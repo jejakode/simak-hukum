@@ -159,7 +159,7 @@
                 @foreach($diktum ?? [] as $index => $item)
                     @if($item)
                     <div class="diktum-item">
-                        <strong>{{ $diktum_labels[$index] ?? 'SELANJUTNYA' }}:</strong> {{ $item }};
+                        <strong>{{ $diktum_labels[$index] ?? 'SELANJUTNYA' }}:</strong> {{ $item }}.
                     </div>
                     @endif
                 @endforeach
@@ -178,3 +178,4 @@
     </div>
 </body>
 </html>
+

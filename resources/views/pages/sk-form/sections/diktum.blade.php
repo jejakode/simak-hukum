@@ -10,7 +10,7 @@
             label="Menetapkan"
             :value="$draft['menetapkan'] ?? ''"
             rows="2"
-            placeholder="Contoh: KEPUTUSAN KEPALA DINAS TENTANG..."
+            placeholder="Contoh: KEPUTUSAN BUPATI TENTANG..."
         />
 
         <x-sk-form.dynamic-list

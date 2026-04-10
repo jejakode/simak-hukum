@@ -22,6 +22,7 @@ class SkDocumentService
     public function createDocxFromData(array $data, ?string $targetPath = null): string
     {
         $templatePath = resource_path('templates/sk.docx');
+        $memperhatikanItems = $this->filterArray($data['memperhatikan'] ?? []);
 
         if (!file_exists($templatePath)) {
             abort(404, 'Template not found');
@@ -52,7 +53,7 @@ class SkDocumentService
             'Mengingat',
             $data['mengingat'] ?? []
         );
-        $template->setValue('menetapkan', $data['menetapkan'] ?? '');
+        $template->setValue('menetapkan', $this->withFinalPeriod((string) ($data['menetapkan'] ?? '')));
         $this->cloneDiktumRows($template, 'diktum_label', 'diktum_text', $data['diktum'] ?? []);
         $template->setValue('ditetapkan_di', $data['ditetapkan_di'] ?? '');
         $template->setValue('pada_tanggal', '');
@@ -62,6 +63,7 @@ class SkDocumentService
         $outputPath = $targetPath ?? $this->makeTempDocxPath();
 
         $template->saveAs($outputPath);
+        $this->injectMemperhatikanSection($outputPath, $memperhatikanItems);
 
         return $outputPath;
     }
@@ -160,7 +162,7 @@ class SkDocumentService
         foreach ($items as $index => $text) {
             $items[$index] = [
                 $labelMacro => self::DIKTUM_LABELS[$index] ?? 'DIKTUM ' . ($index + 1),
-                $textMacro => $text . ';',
+                $textMacro => $this->withFinalPeriod($text),
             ];
         }
 
@@ -172,5 +174,65 @@ class SkDocumentService
         return array_values(array_filter($items, static function ($value) {
             return is_string($value) && trim($value) !== '';
         }));
+    }
+
+    private function withFinalPeriod(string $text): string
+    {
+        $normalized = rtrim(trim($text), " \t\n\r\0\x0B;:.!");
+        if ($normalized === '') {
+            return '';
+        }
+
+        return $normalized . '.';
+    }
+
+    private function injectMemperhatikanSection(string $docxPath, array $items): void
+    {
+        if (empty($items) || !is_file($docxPath) || !class_exists(\ZipArchive::class)) {
+            return;
+        }
+
+        $zip = new \ZipArchive();
+        if ($zip->open($docxPath) !== true) {
+            return;
+        }
+
+        try {
+            $documentXml = $zip->getFromName('word/document.xml');
+            if (!is_string($documentXml) || $documentXml === '') {
+                return;
+            }
+
+            $sectionXml = $this->buildMemperhatikanSectionXml($items);
+            $updatedXml = preg_replace(
+                '/(<w:p\b[^>]*>.*?<w:t>MEMUTUSKAN:<\/w:t>.*?<\/w:p>)/s',
+                $sectionXml . '$1',
+                $documentXml,
+                1
+            );
+
+            if (!is_string($updatedXml) || $updatedXml === $documentXml) {
+                return;
+            }
+
+            $zip->addFromString('word/document.xml', $updatedXml);
+        } finally {
+            $zip->close();
+        }
+    }
+
+    private function buildMemperhatikanSectionXml(array $items): string
+    {
+        $xml = [];
+        $xml[] = '<w:p><w:r><w:t>Memperhatikan :</w:t></w:r></w:p>';
+
+        foreach ($items as $index => $item) {
+            $safeText = htmlspecialchars(($index + 1) . '. ' . $item . ';', ENT_XML1 | ENT_COMPAT, 'UTF-8');
+            $xml[] = '<w:p><w:r><w:t xml:space="preserve">' . $safeText . '</w:t></w:r></w:p>';
+        }
+
+        $xml[] = '<w:p><w:r><w:t></w:t></w:r></w:p>';
+
+        return implode('', $xml);
     }
 }

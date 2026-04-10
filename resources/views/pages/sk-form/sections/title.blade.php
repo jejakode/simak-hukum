@@ -19,7 +19,7 @@
             label="Judul Lengkap"
             :value="$draft['sk_title'] ?? ''"
             rows="3"
-            placeholder="Contoh: KEPUTUSAN KEPALA DINAS KESEHATAN TENTANG PEMBENTUKAN TIM PELAKSANA KEGIATAN VAKSINASI TAHUN 2024"
+            placeholder="Contoh: KEPUTUSAN BUPATI TENTANG PEMBENTUKAN TIM PELAKSANA KEGIATAN VAKSINASI TAHUN 2024"
             help="Gunakan huruf kapital untuk judul resmi."
         />
     </div>
