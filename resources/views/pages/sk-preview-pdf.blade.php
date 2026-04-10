@@ -20,6 +20,28 @@
             padding-right: 8px;
             padding-bottom: 4px;
         }
+        .document-preview .konsiderans-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 6px;
+        }
+        .document-preview .konsiderans-table td {
+            vertical-align: top;
+            padding-bottom: 4px;
+        }
+        .document-preview .konsiderans-head {
+            width: 110px;
+        }
+        .document-preview .konsiderans-sep {
+            width: 12px;
+            text-align: center;
+        }
+        .document-preview .konsiderans-label {
+            width: 24px;
+        }
+        .document-preview .konsiderans-text {
+            text-align: justify;
+        }
         .document-preview .header-text {
             font-size: 12pt;
             line-height: 1.2;
@@ -103,39 +125,51 @@
         <main>
             {{-- Menimbang --}}
             <div class="mb-6">
-                <p class="font-bold mb-3">Menimbang</p>
-                <div style="white-space: pre-line;">
+                <table class="konsiderans-table">
                     @foreach($menimbang ?? [] as $index => $item)
                         @if($item)
-                        <div>{{ chr(97 + $index) }}. {{ $item }};</div>
+                        <tr>
+                            <td class="konsiderans-head">{{ $index === 0 ? 'Menimbang' : '' }}</td>
+                            <td class="konsiderans-sep">{{ $index === 0 ? ':' : '' }}</td>
+                            <td class="konsiderans-label">{{ chr(97 + $index) }}.</td>
+                            <td class="konsiderans-text">{{ rtrim($item, ";\t\n\r\0\x0B") }};</td>
+                        </tr>
                         @endif
                     @endforeach
-                </div>
+                </table>
             </div>
 
             {{-- Mengingat --}}
             <div class="mb-6">
-                <p class="font-bold mb-3">Mengingat</p>
-                <div style="white-space: pre-line;">
+                <table class="konsiderans-table">
                     @foreach($mengingat ?? [] as $index => $item)
                         @if($item)
-                        <div>{{ $index + 1 }}. {{ $item }};</div>
+                        <tr>
+                            <td class="konsiderans-head">{{ $index === 0 ? 'Mengingat' : '' }}</td>
+                            <td class="konsiderans-sep">{{ $index === 0 ? ':' : '' }}</td>
+                            <td class="konsiderans-label">{{ $index + 1 }}.</td>
+                            <td class="konsiderans-text">{{ rtrim($item, ";\t\n\r\0\x0B") }};</td>
+                        </tr>
                         @endif
                     @endforeach
-                </div>
+                </table>
             </div>
 
             {{-- Memperhatikan --}}
             @if(isset($memperhatikan) && !empty(array_filter($memperhatikan)))
             <div class="mb-6">
-                <p class="font-bold mb-3">Memperhatikan</p>
-                <div style="white-space: pre-line;">
+                <table class="konsiderans-table">
                     @foreach($memperhatikan ?? [] as $index => $item)
-                         @if($item)
-                        <div>{{ $index + 1 }}. {{ $item }};</div>
+                        @if($item)
+                        <tr>
+                            <td class="konsiderans-head">{{ $index === 0 ? 'Memperhatikan' : '' }}</td>
+                            <td class="konsiderans-sep">{{ $index === 0 ? ':' : '' }}</td>
+                            <td class="konsiderans-label">{{ $index + 1 }}.</td>
+                            <td class="konsiderans-text">{{ rtrim($item, ";\t\n\r\0\x0B") }};</td>
+                        </tr>
                         @endif
                     @endforeach
-                </div>
+                </table>
             </div>
             @endif
 

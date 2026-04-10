@@ -22,7 +22,6 @@ class SkDocumentService
     public function createDocxFromData(array $data, ?string $targetPath = null): string
     {
         $templatePath = resource_path('templates/sk.docx');
-        $memperhatikanItems = $this->filterArray($data['memperhatikan'] ?? []);
 
         if (!file_exists($templatePath)) {
             abort(404, 'Template not found');
@@ -53,6 +52,15 @@ class SkDocumentService
             'Mengingat',
             $data['mengingat'] ?? []
         );
+        $this->cloneNumberListRows(
+            $template,
+            'mmprhtkn_head',
+            'mmprhtkn_sep',
+            'mmprhtkn_label',
+            'mmprhtkn_text',
+            'Memperhatikan',
+            $data['memperhatikan'] ?? []
+        );
         $template->setValue('menetapkan', $this->withFinalPeriod((string) ($data['menetapkan'] ?? '')));
         $this->cloneDiktumRows($template, 'diktum_label', 'diktum_text', $data['diktum'] ?? []);
         $template->setValue('ditetapkan_di', $data['ditetapkan_di'] ?? '');
@@ -63,7 +71,7 @@ class SkDocumentService
         $outputPath = $targetPath ?? $this->makeTempDocxPath();
 
         $template->saveAs($outputPath);
-        $this->injectMemperhatikanSection($outputPath, $memperhatikanItems);
+        $this->normalizeKonsideransTableLayout($outputPath);
 
         return $outputPath;
     }
@@ -186,9 +194,9 @@ class SkDocumentService
         return $normalized . '.';
     }
 
-    private function injectMemperhatikanSection(string $docxPath, array $items): void
+    private function normalizeKonsideransTableLayout(string $docxPath): void
     {
-        if (empty($items) || !is_file($docxPath) || !class_exists(\ZipArchive::class)) {
+        if (!is_file($docxPath) || !class_exists(\ZipArchive::class)) {
             return;
         }
 
@@ -203,12 +211,54 @@ class SkDocumentService
                 return;
             }
 
-            $sectionXml = $this->buildMemperhatikanSectionXml($items);
-            $updatedXml = preg_replace(
-                '/(<w:p\b[^>]*>.*?<w:t>MEMUTUSKAN:<\/w:t>.*?<\/w:p>)/s',
-                $sectionXml . '$1',
-                $documentXml,
-                1
+            $updatedXml = preg_replace_callback(
+                '/<w:tbl\b[^>]*>.*?<\/w:tbl>/s',
+                static function (array $matches): string {
+                    $tableXml = $matches[0];
+                    $hasKonsideransMarker = str_contains($tableXml, 'Menimbang')
+                        || str_contains($tableXml, 'Mengingat')
+                        || str_contains($tableXml, 'Memperhatikan');
+
+                    if (!$hasKonsideransMarker) {
+                        return $tableXml;
+                    }
+
+                    $gridXml = '<w:tblGrid>'
+                        . '<w:gridCol w:w="1699"/>'
+                        . '<w:gridCol w:w="426"/>'
+                        . '<w:gridCol w:w="442"/>'
+                        . '<w:gridCol w:w="6523"/>'
+                        . '</w:tblGrid>';
+
+                    if (preg_match('/<w:tblGrid>.*?<\/w:tblGrid>/s', $tableXml) === 1) {
+                        $tableXml = (string) preg_replace('/<w:tblGrid>.*?<\/w:tblGrid>/s', $gridXml, $tableXml, 1);
+                    } else {
+                        $tableXml = (string) preg_replace('/(<w:tblPr>.*?<\/w:tblPr>)/s', '$1' . $gridXml, $tableXml, 1);
+                    }
+
+                    $widths = ['1699', '426', '442', '6523'];
+                    $tableXml = (string) preg_replace_callback(
+                        '/<w:tr\b[^>]*>.*?<\/w:tr>/s',
+                        static function (array $rowMatches) use ($widths): string {
+                            $rowXml = $rowMatches[0];
+                            $cellIndex = 0;
+
+                            return (string) preg_replace_callback(
+                                '/<w:tcW\b[^>]*\/>/',
+                                static function () use (&$cellIndex, $widths): string {
+                                    $width = $widths[min($cellIndex, 3)];
+                                    $cellIndex++;
+                                    return '<w:tcW w:w="' . $width . '" w:type="dxa"/>';
+                                },
+                                $rowXml
+                            );
+                        },
+                        $tableXml
+                    );
+
+                    return $tableXml;
+                },
+                $documentXml
             );
 
             if (!is_string($updatedXml) || $updatedXml === $documentXml) {
@@ -221,18 +271,4 @@ class SkDocumentService
         }
     }
 
-    private function buildMemperhatikanSectionXml(array $items): string
-    {
-        $xml = [];
-        $xml[] = '<w:p><w:r><w:t>Memperhatikan :</w:t></w:r></w:p>';
-
-        foreach ($items as $index => $item) {
-            $safeText = htmlspecialchars(($index + 1) . '. ' . $item . ';', ENT_XML1 | ENT_COMPAT, 'UTF-8');
-            $xml[] = '<w:p><w:r><w:t xml:space="preserve">' . $safeText . '</w:t></w:r></w:p>';
-        }
-
-        $xml[] = '<w:p><w:r><w:t></w:t></w:r></w:p>';
-
-        return implode('', $xml);
-    }
 }

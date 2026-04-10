@@ -106,6 +106,19 @@
         @endforeach
     </table>
 
+    @if (!empty($memperhatikan ?? []))
+        <table class="konsiderans section">
+            @foreach ($memperhatikan as $index => $item)
+                <tr>
+                    <td class="col-head">{{ $index === 0 ? 'Memperhatikan' : '' }}</td>
+                    <td class="col-sep">{{ $index === 0 ? ':' : '' }}</td>
+                    <td class="col-label">{{ $index + 1 }}.</td>
+                    <td style="text-align: justify;">{{ rtrim($item, ";\t\n\r\0\x0B") }};</td>
+                </tr>
+            @endforeach
+        </table>
+    @endif
+
     <table class="konsiderans section">
         <tr>
             <td class="col-head">Menetapkan</td>
