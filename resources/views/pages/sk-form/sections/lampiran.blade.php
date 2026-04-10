@@ -1,7 +1,7 @@
 <x-sk-form.section-card
     number="5"
     title="Lampiran"
-    description="Unggah lampiran (DOCX, PDF, JPG, PNG). Lampiran akan langsung disisipkan setelah halaman terakhir SK."
+    description="Unggah lampiran (DOCX, JPG, JPEG, PNG). Lampiran akan langsung disisipkan setelah halaman terakhir SK."
 >
     <div class="space-y-4">
         <div>
@@ -12,7 +12,7 @@
                 type="file"
                 name="lampiran_docx[]"
                 id="lampiran_docx"
-                accept=".docx,.pdf,.jpg,.jpeg,.png,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf,image/jpeg,image/png"
+                accept=".docx,.jpg,.jpeg,.png,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/jpeg,image/png"
                 multiple
                 class="block w-full rounded-xl border border-slate-300 bg-white px-3.5 py-3 text-sm text-slate-900 shadow-sm outline-none transition file:mr-3 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-blue-700 hover:file:bg-blue-100 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:file:bg-cyan-900/30 dark:file:text-cyan-200 dark:hover:file:bg-cyan-800/40 dark:focus:border-cyan-400 dark:focus:ring-cyan-500/20"
             >

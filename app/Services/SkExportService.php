@@ -79,33 +79,64 @@ class SkExportService
     {
         $mainDocxPath = $this->documentService->createDocxFromData($data);
         $lampiranFiles = $this->resolveLampiranFiles($data['lampiran'] ?? []);
+        $inlineLampiranFiles = array_values(array_filter(
+            $lampiranFiles,
+            static fn (array $file): bool => in_array(($file['extension'] ?? ''), ['docx', 'jpg', 'jpeg', 'png'], true)
+        ));
 
-        if (empty($lampiranFiles)) {
+        if (empty($inlineLampiranFiles)) {
             return $mainDocxPath;
         }
 
         if (DIRECTORY_SEPARATOR !== '\\') {
             Log::warning('Lampiran DOCX inline dilewati di Linux karena membutuhkan Word COM.', [
-                'lampiran_count' => count($lampiranFiles),
+                'lampiran_count' => count($inlineLampiranFiles),
             ]);
             return $mainDocxPath;
         }
 
-        $mergedDocxPath = $this->appendLampiranWithWordCom($mainDocxPath, $lampiranFiles);
-        @unlink($mainDocxPath);
+        try {
+            $mergedDocxPath = $this->appendLampiranWithWordCom($mainDocxPath, $inlineLampiranFiles);
+            @unlink($mainDocxPath);
 
-        return $mergedDocxPath;
+            return $mergedDocxPath;
+        } catch (\Throwable $exception) {
+            Log::warning('Merge lampiran via Word COM gagal. Lanjut gunakan dokumen utama tanpa lampiran inline.', [
+                'error' => $exception->getMessage(),
+                'main_docx_path' => $mainDocxPath,
+                'lampiran_count' => count($inlineLampiranFiles),
+            ]);
+
+            return $mainDocxPath;
+        }
     }
 
     public function createFinalPdfFromData(array $data): string
     {
         $lampiranFiles = $this->resolveLampiranFiles($data['lampiran'] ?? []);
+        $pdfLampiranFiles = array_values(array_filter(
+            $lampiranFiles,
+            static fn (array $file): bool => ($file['extension'] ?? '') === 'pdf'
+        ));
 
         if (DIRECTORY_SEPARATOR === '\\') {
             $docxPath = $this->createFinalDocxFromData($data);
 
             try {
-                return $this->convertDocxToPdf($docxPath);
+                $mainPdfPath = $this->convertDocxToPdf($docxPath);
+                if (empty($pdfLampiranFiles)) {
+                    return $mainPdfPath;
+                }
+
+                $pdfPaths = [$mainPdfPath];
+                foreach ($pdfLampiranFiles as $lampiranFile) {
+                    $pdfPaths[] = $lampiranFile['full_path'];
+                }
+
+                $mergedPdfPath = $this->mergePdfFiles($pdfPaths);
+                @unlink($mainPdfPath);
+
+                return $mergedPdfPath;
             } finally {
                 @unlink($docxPath);
             }
@@ -406,10 +437,7 @@ try {
         if ($extension -eq '.docx') {
             $insertRange.InsertFile($attachmentPath)
         } elseif ($extension -eq '.pdf') {
-            $pdfDoc = $word.Documents.Open($attachmentPath, $false, $true)
-            $insertRange.FormattedText = $pdfDoc.Content.FormattedText
-            $pdfDoc.Close()
-            $pdfDoc = $null
+            continue
         } elseif ($extension -in @('.jpg', '.jpeg', '.png')) {
             $shape = $insertRange.InlineShapes.AddPicture($attachmentPath, $false, $true)
             $maxWidth = 430
@@ -452,9 +480,9 @@ PS;
         $process->run();
 
         if (!$process->isSuccessful() || !file_exists($outputDocxPath)) {
-            abort(
-                500,
-                'Gagal menggabungkan lampiran ke dokumen. Output: ' . trim($process->getErrorOutput() . ' ' . $process->getOutput())
+            throw new \RuntimeException(
+                'Gagal menggabungkan lampiran ke dokumen. Output: ' .
+                trim($process->getErrorOutput() . ' ' . $process->getOutput())
             );
         }
 
@@ -498,6 +526,7 @@ PS;
             $files[] = [
                 'name' => $name,
                 'full_path' => $fullPath,
+                'extension' => $extension,
             ];
         }
 

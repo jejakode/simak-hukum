@@ -71,7 +71,6 @@ class SkDocumentService
         $outputPath = $targetPath ?? $this->makeTempDocxPath();
 
         $template->saveAs($outputPath);
-        $this->normalizeKonsideransTableLayout($outputPath);
 
         return $outputPath;
     }
@@ -192,83 +191,6 @@ class SkDocumentService
         }
 
         return $normalized . '.';
-    }
-
-    private function normalizeKonsideransTableLayout(string $docxPath): void
-    {
-        if (!is_file($docxPath) || !class_exists(\ZipArchive::class)) {
-            return;
-        }
-
-        $zip = new \ZipArchive();
-        if ($zip->open($docxPath) !== true) {
-            return;
-        }
-
-        try {
-            $documentXml = $zip->getFromName('word/document.xml');
-            if (!is_string($documentXml) || $documentXml === '') {
-                return;
-            }
-
-            $updatedXml = preg_replace_callback(
-                '/<w:tbl\b[^>]*>.*?<\/w:tbl>/s',
-                static function (array $matches): string {
-                    $tableXml = $matches[0];
-                    $hasKonsideransMarker = str_contains($tableXml, 'Menimbang')
-                        || str_contains($tableXml, 'Mengingat')
-                        || str_contains($tableXml, 'Memperhatikan');
-
-                    if (!$hasKonsideransMarker) {
-                        return $tableXml;
-                    }
-
-                    $gridXml = '<w:tblGrid>'
-                        . '<w:gridCol w:w="1699"/>'
-                        . '<w:gridCol w:w="426"/>'
-                        . '<w:gridCol w:w="442"/>'
-                        . '<w:gridCol w:w="6523"/>'
-                        . '</w:tblGrid>';
-
-                    if (preg_match('/<w:tblGrid>.*?<\/w:tblGrid>/s', $tableXml) === 1) {
-                        $tableXml = (string) preg_replace('/<w:tblGrid>.*?<\/w:tblGrid>/s', $gridXml, $tableXml, 1);
-                    } else {
-                        $tableXml = (string) preg_replace('/(<w:tblPr>.*?<\/w:tblPr>)/s', '$1' . $gridXml, $tableXml, 1);
-                    }
-
-                    $widths = ['1699', '426', '442', '6523'];
-                    $tableXml = (string) preg_replace_callback(
-                        '/<w:tr\b[^>]*>.*?<\/w:tr>/s',
-                        static function (array $rowMatches) use ($widths): string {
-                            $rowXml = $rowMatches[0];
-                            $cellIndex = 0;
-
-                            return (string) preg_replace_callback(
-                                '/<w:tcW\b[^>]*\/>/',
-                                static function () use (&$cellIndex, $widths): string {
-                                    $width = $widths[min($cellIndex, 3)];
-                                    $cellIndex++;
-                                    return '<w:tcW w:w="' . $width . '" w:type="dxa"/>';
-                                },
-                                $rowXml
-                            );
-                        },
-                        $tableXml
-                    );
-
-                    return $tableXml;
-                },
-                $documentXml
-            );
-
-            if (!is_string($updatedXml) || $updatedXml === $documentXml) {
-                return;
-            }
-
-            $zip->addFromString('word/document.xml', $updatedXml);
-        } finally {
-            $zip->close();
-        }
     }
 
 }

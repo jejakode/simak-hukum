@@ -141,7 +141,7 @@ class SkController extends Controller
             'diktum' => ['required', 'array', 'min:1'],
             'diktum.*' => ['required', 'string', 'max:4000'],
             'lampiran_docx' => ['nullable', 'array'],
-            'lampiran_docx.*' => ['nullable', 'file', 'mimes:docx,pdf,jpg,jpeg,png', 'max:10240'],
+            'lampiran_docx.*' => ['nullable', 'file', 'mimes:docx,jpg,jpeg,png', 'max:10240'],
             'remove_lampiran' => ['nullable', 'array'],
             'remove_lampiran.*' => ['nullable', 'string'],
             'ditetapkan_di' => ['required', 'string', 'max:255'],
@@ -157,7 +157,7 @@ class SkController extends Controller
             'array' => ':attribute harus berupa daftar.',
             'min' => ':attribute minimal :min poin.',
             'max' => ':attribute melebihi batas karakter.',
-            'mimes' => ':attribute harus berformat DOCX, PDF, JPG, JPEG, atau PNG.',
+            'mimes' => ':attribute harus berformat DOCX, JPG, JPEG, atau PNG.',
             'file' => ':attribute harus berupa file.',
         ];
     }
